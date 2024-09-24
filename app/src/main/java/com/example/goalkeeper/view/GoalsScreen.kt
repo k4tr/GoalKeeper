@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,28 +16,39 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.goalkeeper.R
+import com.example.goalkeeper.data.Goal
 import com.example.goalkeeper.ui.theme.DarkGreen
-import com.example.goalkeeper.ui.theme.GoalKeeperTheme
 import com.example.goalkeeper.ui.theme.Maroon
+import com.example.goalkeeper.viewmodel.GoalViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,9 +56,25 @@ import java.util.Locale
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GoalsScreen() {
+fun GoalsScreen(
+    navController: NavController,
+    goalViewModel: GoalViewModel,
+    onNavigateToAddGoal: () -> Unit
+) {
+
+    val state by goalViewModel.state.collectAsState()
+    val generatedGoals by goalViewModel.generatedGoals.collectAsState()
     val scrollState = rememberScrollState()
     Scaffold(
+//        bottomBar = {
+//            BottomAppBar(
+//                content = {
+//                    IconButton(onClick = { navController.navigate("searchScreen") }) {
+//                        Icon(Icons.Default.Search, contentDescription = "Поиск")
+//                    }
+//                }
+//            )
+//        }
     ) {
         Box(
             modifier = Modifier
@@ -54,12 +82,9 @@ fun GoalsScreen() {
                 .background(Color(0xF2F2F6)), // Устанавливаем фон экрана
             contentAlignment = Alignment.TopStart
         ) {
-
-
             Column(
                 modifier = Modifier.padding(22.dp)
             ) {
-
                 // Отображение текущей даты
                 Text(
                     text = getCurrentDate(),
@@ -81,35 +106,95 @@ fun GoalsScreen() {
                 ){
                     GoalButton(
                         text = "Ввести цель",
-                        icon = R.drawable.icon_add,
-                        onClick = { /* TODO: Handle "Ввести цель" action */ }
+                        iconRes = R.drawable.icon_add,
+                        onClick = { navController.navigate("addGoalScreen") }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     GoalButtonWithCustomIcon(
                         text = "Генерация",
                         iconRes = R.drawable.component_1, // Используем пользовательскую иконку
-                        onClick = { /* TODO: Handle "Генерация" action */ }
+                        onClick = { goalViewModel.generateGoals() }
                     )
+
+                }
+                // Кнопка для очистки списка
+                ElevatedButton(onClick = { goalViewModel.clearGeneratedGoals() }) {
+                    Text("Очистить список")
+                }
+                Text(
+                    text = "Цели на сегодня:",
+                    color = DarkGreen,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                if (generatedGoals.isEmpty()) {
+                    Text(text = "Пока что целей нет! Скорее добавьте их :D", color = Color.Gray)
+                } else {
+                    LazyColumn {
+                        items(generatedGoals) { goal ->
+                            GoalItem(goal)
+                        }
+                    }
                 }
 
-
-                Spacer(modifier = Modifier.height(150.dp))
             }
         }
     }
 }
+
+@Composable
+fun GoalsList(goals: List<Goal?>) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .background(Color.White, shape = RoundedCornerShape(16.dp)) // Закругленные углы и цвет фона
+            .padding(16.dp) // Отступы внутри подложки
+    ){
+
+        if (goals.isEmpty()) {
+            // Если список целей пуст, отображаем текст
+            Text(
+                text = "Пока что целей нет! Скорее добавьте их :D",
+                modifier = Modifier.padding(16.dp),
+                color = Color.Gray,
+                fontSize = 16.sp
+            )
+        } else {
+            // Если цели есть, отображаем список
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                items(goals) { goal ->
+                    if (goal != null) {
+                        GoalItem(goal)
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+@Composable
+fun GoalItem(goal: Goal) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(text = goal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(text = goal.difficulty.name, color = Color.Gray)
+    }
+}
+
 // Получение текущей даты в нужном формате
 fun getCurrentDate(): String {
     val sdf = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
     return sdf.format(Date())
-}
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    GoalKeeperTheme() {
-        GoalsScreen()
-    }
 }
 @Composable
 fun GoalButtonWithCustomIcon(text: String, iconRes: Int, onClick: () -> Unit) {
@@ -135,11 +220,11 @@ fun GoalButtonWithCustomIcon(text: String, iconRes: Int, onClick: () -> Unit) {
 }
 // Компонент кнопки с иконкой
 @Composable
-fun GoalButton(text: String, icon: Int, onClick: () -> Unit) {
+fun GoalButton(text: String, iconRes: Int, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-        shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)), // Закругленные углы
+        shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)),
         modifier = Modifier
             .width(168.dp)
             .height(48.dp)
@@ -149,19 +234,10 @@ fun GoalButton(text: String, icon: Int, onClick: () -> Unit) {
                 shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)) // Форма обводки
             )
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically, // Центрирование элементов по вертикали
-            modifier = Modifier.width(168.dp) // Заполнение всей доступной ширины кнопки
-        ) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = text,
-                color = DarkGreen,
-                fontWeight = FontWeight.Normal,
-                fontSize = 15.sp,
-                maxLines = 1,
-                modifier = Modifier.weight(0.8f) // Текст занимает 80% ширины кнопки
-            )
-        }
+        Image(painter = painterResource(id = iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(text, color = DarkGreen, fontSize = 15.sp, fontWeight = FontWeight.Normal)
     }
 }

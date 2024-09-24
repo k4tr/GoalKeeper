@@ -10,21 +10,22 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.5"
 activityCompose = "1.9.2"
-composeBom = "2024.09.01"
+composeBom = "2024.09.02"
 activityComposeVersion = "1.9.2"
-androidxComposeBom = "2024.09.01"
+androidxComposeBom = "2024.09.02"
 androidxJunit = "1.2.1"
 coreKtxVersion = "1.13.1"
 hiltAndroid = "2.51"
 hiltAndroidCompiler = "2.48"
 hiltCompiler = "1.2.0"
-lifecycleRuntimeKtxVersion = "2.8.5"
-navigationCompose = "2.8.0"
-navigationComposeVersion = "2.8.0"
+lifecycleRuntimeKtxVersion = "2.8.6"
+navigationCompose = "2.8.1"
+navigationComposeVersion = "2.8.1"
 roomCommon = "2.6.1"
 roomKtx = "2.6.1"
 material3Android = "1.3.0"
-ui = "1.7.1"
+ui = "1.7.2"
+storage = "1.5.0"
 
 [libraries]
 androidx-activity-compose-v180 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -68,6 +69,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-storage = { group = "androidx.test.services", name = "storage", version.ref = "storage" }
 
 [plugins]
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version = "2.0.20" }

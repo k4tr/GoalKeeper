@@ -55,6 +55,7 @@ dependencies {
 
     // Room
     implementation (libs.androidx.room.runtime)
+    implementation(libs.androidx.storage)
     kapt (libs.androidx.room.compiler)
 
     // Room для Kotlin Coroutines
