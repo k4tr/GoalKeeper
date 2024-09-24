@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +25,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -66,15 +66,15 @@ fun GoalsScreen(
     val generatedGoals by goalViewModel.generatedGoals.collectAsState()
     val scrollState = rememberScrollState()
     Scaffold(
-//        bottomBar = {
-//            BottomAppBar(
-//                content = {
-//                    IconButton(onClick = { navController.navigate("searchScreen") }) {
-//                        Icon(Icons.Default.Search, contentDescription = "Поиск")
-//                    }
-//                }
-//            )
-//        }
+        bottomBar = {
+            BottomAppBar(
+                content = {
+                    IconButton(onClick = { navController.navigate("searchScreen") }) {
+                        Icon(Icons.Default.Search, contentDescription = "Поиск")
+                    }
+                }
+            )
+        }
     ) {
         Box(
             modifier = Modifier
@@ -109,6 +109,7 @@ fun GoalsScreen(
                         iconRes = R.drawable.icon_add,
                         onClick = { navController.navigate("addGoalScreen") }
                     )
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     GoalButtonWithCustomIcon(
@@ -116,11 +117,6 @@ fun GoalsScreen(
                         iconRes = R.drawable.component_1, // Используем пользовательскую иконку
                         onClick = { goalViewModel.generateGoals() }
                     )
-
-                }
-                // Кнопка для очистки списка
-                ElevatedButton(onClick = { goalViewModel.clearGeneratedGoals() }) {
-                    Text("Очистить список")
                 }
                 Text(
                     text = "Цели на сегодня:",
@@ -129,65 +125,32 @@ fun GoalsScreen(
                     fontWeight = FontWeight.Normal,
                     modifier = Modifier.padding(top = 16.dp)
                 )
-                if (generatedGoals.isEmpty()) {
-                    Text(text = "Пока что целей нет! Скорее добавьте их :D", color = Color.Gray)
-                } else {
-                    LazyColumn {
-                        items(generatedGoals) { goal ->
-                            GoalItem(goal)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp) // Отступы между элементами
+                        .background(Color.White, shape = RoundedCornerShape(12.dp)) // Белая подложка с закругленными углами
+                        .border(
+                            width = 1.dp, // Ширина обводки
+                            color = Maroon, // Цвет обводки
+                            shape = RoundedCornerShape(12.dp) // Форма обводки
+                        )
+                        .padding(16.dp) // Внутренние отступы внутри элемента
+                ){
+                    if (generatedGoals.isEmpty()) {
+                        Text(text = "Пока что целей нет! Скорее добавьте их :D", color = Color.Gray)
+                    } else {
+                        LazyColumn {
+                            items(generatedGoals) { goal ->
+                                GoalItem(goal)
+                            }
                         }
                     }
                 }
 
+
             }
         }
-    }
-}
-
-@Composable
-fun GoalsList(goals: List<Goal?>) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .background(Color.White, shape = RoundedCornerShape(16.dp)) // Закругленные углы и цвет фона
-            .padding(16.dp) // Отступы внутри подложки
-    ){
-
-        if (goals.isEmpty()) {
-            // Если список целей пуст, отображаем текст
-            Text(
-                text = "Пока что целей нет! Скорее добавьте их :D",
-                modifier = Modifier.padding(16.dp),
-                color = Color.Gray,
-                fontSize = 16.sp
-            )
-        } else {
-            // Если цели есть, отображаем список
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                items(goals) { goal ->
-                    if (goal != null) {
-                        GoalItem(goal)
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-@Composable
-fun GoalItem(goal: Goal) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Text(text = goal.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Text(text = goal.difficulty.name, color = Color.Gray)
     }
 }
 
@@ -240,4 +203,13 @@ fun GoalButton(text: String, iconRes: Int, onClick: () -> Unit) {
         Spacer(modifier = Modifier.width(10.dp))
         Text(text, color = DarkGreen, fontSize = 15.sp, fontWeight = FontWeight.Normal)
     }
+}
+//элементы списка (цели на день)
+@Composable
+fun GoalItem(goal: Goal) {
+        Column {
+            Spacer(modifier = Modifier.padding(8.dp))
+            Text(text = goal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(text = goal.difficulty.name, color = Color.Gray)
+        }
 }

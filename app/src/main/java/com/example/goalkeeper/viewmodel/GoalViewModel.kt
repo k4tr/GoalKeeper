@@ -22,8 +22,17 @@ class GoalViewModel(
     private val goalDao: GoalDao
 ) : ViewModel() {
 
+    fun getAllGoals() {
+        viewModelScope.launch {
+            val goals = repository.getAllGoals()
+            // Здесь вы можете обновить состояние или выполнить другие действия с полученными целями
+        }
+    }
+
     private val _generatedGoals = MutableStateFlow<List<Goal>>(emptyList())
     val generatedGoals: StateFlow<List<Goal>> = _generatedGoals
+    private val _allGoals = MutableStateFlow<List<Goal>>(emptyList())
+    val allGoals: StateFlow<List<Goal>> = _allGoals
 
     // Состояние для хранения списка целей
     private val _state = MutableStateFlow(GoalState())
@@ -32,6 +41,9 @@ class GoalViewModel(
     init {
         loadGeneratedGoals()
         checkAndClearOldGoals()
+        viewModelScope.launch {
+            _allGoals.value = repository.getAllGoals()
+        }
     }
 
     fun loadGeneratedGoals() {

@@ -126,6 +126,7 @@ fun AddGoalScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
+
                     .background(Color.Transparent), // Прозрачный контейнер
                 onValueChange = { goalName = it },
                 label = { Text("Введите имя цели") }

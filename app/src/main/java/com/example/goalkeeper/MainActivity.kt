@@ -14,6 +14,7 @@ import com.example.goalkeeper.di.GoalViewModelFactory
 import com.example.goalkeeper.ui.theme.GoalKeeperTheme
 import com.example.goalkeeper.view.GoalsScreen
 import com.example.goalkeeper.view.AddGoalScreen
+import com.example.goalkeeper.view.SearchScreen
 import com.example.goalkeeper.viewmodel.GoalViewModel
 
 
@@ -41,6 +42,12 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate("addGoalScreen")
                             },
                             navController = navController // Передаем navController
+                        )
+                    }
+                    composable("searchScreen") {
+                        SearchScreen(
+                            goalViewModel = goalViewModel,
+                            onBackClick = { navController.popBackStack() } // Возвращаемся на экран целей
                         )
                     }
                     composable("addGoalScreen") {
