@@ -13,6 +13,9 @@ interface GoalDao {
     @Query("SELECT * FROM goals WHERE isGenerated = 1 AND generationDate = :date")
     suspend fun getGeneratedGoalsForDate(date: Long): List<Goal>
 
+    @Query("DELETE FROM goals WHERE isGenerated = 1 AND generationDate < :currentDate")
+    suspend fun deleteOldGeneratedGoals(currentDate: Long): Int
+
     @Query("DELETE FROM goals WHERE isGenerated = 1")
     suspend fun deleteAllGeneratedGoals()
 
@@ -27,6 +30,7 @@ interface GoalDao {
 
     @Query("DELETE FROM goals WHERE id = :goalId")
     suspend fun deleteGoal(goalId: Long)
+
     @Insert
     suspend fun insert(it: Goal)
 }

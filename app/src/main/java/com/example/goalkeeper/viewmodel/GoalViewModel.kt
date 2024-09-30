@@ -8,11 +8,9 @@ import com.example.goalkeeper.data.Goal
 import com.example.goalkeeper.data.GoalDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-
-
-// Определяем состояние ViewModel
 data class GoalState(
     val goals: List<Goal?> = emptyList()
 )
@@ -22,17 +20,11 @@ class GoalViewModel(
     private val goalDao: GoalDao
 ) : ViewModel() {
 
-    fun getAllGoals() {
-        viewModelScope.launch {
-            val goals = repository.getAllGoals()
-            // Здесь вы можете обновить состояние или выполнить другие действия с полученными целями
-        }
-    }
-
     private val _generatedGoals = MutableStateFlow<List<Goal>>(emptyList())
     val generatedGoals: StateFlow<List<Goal>> = _generatedGoals
+
     private val _allGoals = MutableStateFlow<List<Goal>>(emptyList())
-    val allGoals: StateFlow<List<Goal>> = _allGoals
+    val allGoals: StateFlow<List<Goal>> = _allGoals.asStateFlow()
 
     // Состояние для хранения списка целей
     private val _state = MutableStateFlow(GoalState())
@@ -46,76 +38,68 @@ class GoalViewModel(
         }
     }
 
+    // Загрузка сгенерированных целей на сегодня
     fun loadGeneratedGoals() {
         viewModelScope.launch {
             val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
             val savedGoals = goalDao.getGeneratedGoalsForDate(today)
-
             if (savedGoals.isNotEmpty()) {
                 _generatedGoals.value = savedGoals // Загружаем сохраненные цели, если они есть
             }
         }
     }
-    //проверка даты и удаление списка
+
+    // Проверка и удаление старых сгенерированных целей
     fun checkAndClearOldGoals() {
         viewModelScope.launch {
-            val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)
-            val lastGeneratedGoals = goalDao.getGeneratedGoalsForDate(today - 1)
-
-            if (lastGeneratedGoals.isNotEmpty()) {
-                goalDao.deleteAllGeneratedGoals()
-            }
+            val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
+            goalDao.deleteOldGeneratedGoals(today)  // Удаляем сгенерированные цели за прошлые дни
         }
     }
+
     // Функция для добавления цели
     fun addGoal(goal: Goal) {
         viewModelScope.launch {
-            repository.insertGoal(goal) // Сначала сохраняем цель в базе данных
-            val updatedGoals = repository.getAllGoals() // Обновляем список целей
-            _state.value = _state.value.copy(goals = updatedGoals)
+            repository.insertGoal(goal) // Сохраняем цель
+            _allGoals.value = repository.getAllGoals() // Обновляем список всех целей
+            _state.value = _state.value.copy(goals = _allGoals.value) // Обновляем состояние
         }
     }
 
-    //генерация списка целей
+    // Генерация целей
     fun generateGoals() {
         viewModelScope.launch {
             val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
-
-            // Получаем уже сгенерированные цели для сегодняшнего дня
             val existingGoals = goalDao.getGeneratedGoalsForDate(today)
 
             if (existingGoals.isNotEmpty()) {
                 _generatedGoals.value = existingGoals
             } else {
-                // Если нет сгенерированных целей на сегодня, создаем новые
-                val difficultGoals = goalDao.getAllGoals().filter { it.difficulty == Difficulty.HARD }
-                val mediumGoals = goalDao.getAllGoals().filter { it.difficulty == Difficulty.NORMAL }
-                val easyGoals = goalDao.getAllGoals().filter { it.difficulty == Difficulty.EASY }
+                val difficultGoals = goalDao.getGoalsByDifficulty(Difficulty.HARD)
+                val mediumGoals = goalDao.getGoalsByDifficulty(Difficulty.NORMAL)
+                val easyGoals = goalDao.getGoalsByDifficulty(Difficulty.EASY)
 
-                // Случайно выбираем 1 сложную цель, 2 средних и 3 простых
                 val selectedDifficultGoal = difficultGoals.randomOrNull()
                 val selectedMediumGoals = mediumGoals.shuffled().take(2)
-                val selectedEasyGoals = easyGoals.shuffled().take(3)
+                val selectedEasyGoals = easyGoals.shuffled().take(2)
 
-                // Объединяем выбранные цели
                 val newGeneratedGoals = listOfNotNull(
                     selectedDifficultGoal
                 ) + selectedMediumGoals + selectedEasyGoals
 
-                // Добавляем информацию о генерации
-                val finalGoals = newGeneratedGoals.map { it.copy(isGenerated = true, generationDate = today) }
+                val finalGoals = newGeneratedGoals.map {
+                    it.copy(isGenerated = true, generationDate = today)
+                }
 
-                // Сохраняем сгенерированные цели в базе данных
                 goalDao.insertGoals(finalGoals)
                 _generatedGoals.value = finalGoals
             }
         }
     }
-
-    fun clearGeneratedGoals() {
+    fun deleteGoal(goal: Goal) {
         viewModelScope.launch {
-            goalDao.deleteAllGeneratedGoals()
-            _generatedGoals.value = emptyList()
+            goalDao.deleteGoal(goal.id)  // Здесь передается id из объекта goal
+            _allGoals.value = goalDao.getAllGoals()  // Обновляем список всех целей
         }
     }
 }

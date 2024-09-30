@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.goalkeeper.R
 import com.example.goalkeeper.data.Goal
+import com.example.goalkeeper.module.AppBottomBar
+import com.example.goalkeeper.module.BottomNavTab
 import com.example.goalkeeper.ui.theme.DarkGreen
 import com.example.goalkeeper.ui.theme.Maroon
 import com.example.goalkeeper.viewmodel.GoalViewModel
@@ -59,7 +61,9 @@ import java.util.Locale
 fun GoalsScreen(
     navController: NavController,
     goalViewModel: GoalViewModel,
-    onNavigateToAddGoal: () -> Unit
+    onNavigateToAddGoal: () -> Unit,
+    selectedTab: BottomNavTab,
+    onTabSelected: (BottomNavTab) -> Unit
 ) {
 
     val state by goalViewModel.state.collectAsState()
@@ -67,13 +71,14 @@ fun GoalsScreen(
     val scrollState = rememberScrollState()
     Scaffold(
         bottomBar = {
-            BottomAppBar(
-                content = {
-                    IconButton(onClick = { navController.navigate("searchScreen") }) {
-                        Icon(Icons.Default.Search, contentDescription = "Поиск")
-                    }
+            AppBottomBar(selectedTab = selectedTab, onTabSelected = {
+                onTabSelected(it)
+                when (it) {
+                    BottomNavTab.Home -> navController.navigate("goalsScreen")
+                    BottomNavTab.Search -> navController.navigate("searchScreen")
+                    BottomNavTab.Check -> { /* Логика для третьей вкладки */ }
                 }
-            )
+            })
         }
     ) {
         Box(
@@ -102,15 +107,13 @@ fun GoalsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 // Кнопки "Ввести цель" и "Генерация"
                 Row (modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ){
                     GoalButton(
                         text = "Ввести цель",
                         iconRes = R.drawable.icon_add,
                         onClick = { navController.navigate("addGoalScreen") }
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
 
                     GoalButtonWithCustomIcon(
                         text = "Генерация",
@@ -166,8 +169,8 @@ fun GoalButtonWithCustomIcon(text: String, iconRes: Int, onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
         shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)),
         modifier = Modifier
-            .width(168.dp)
-            .height(48.dp)
+            .width(200.dp)
+            .height(58.dp)
             .border(
                 width = 1.dp, // Ширина обводки
                 color = Maroon, // Цвет обводки
@@ -189,8 +192,8 @@ fun GoalButton(text: String, iconRes: Int, onClick: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
         shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)),
         modifier = Modifier
-            .width(168.dp)
-            .height(48.dp)
+            .width(184.dp)
+            .height(58.dp)
             .border(
                 width = 1.dp, // Ширина обводки
                 color = Maroon, // Цвет обводки
