@@ -13,5 +13,8 @@ open class GoalRepository(private val goalDao: GoalDao) {
         goalDao.insertGoal(goal)
     }
 
+    suspend fun deleteGoal(goalId: Long) {
+        goalDao.deleteGoal(goalId)
+    }
 
 }

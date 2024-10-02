@@ -100,12 +100,12 @@ fun SearchScreen(
     //разноцветный ввод текста))))
     val rainbowColors: List<Color> = listOf(
         Color.Red,
-        Color(0xFFFFA500), // Оранжевый
+        Color(0xFFFFA500),
         Color.Yellow,
         Color.Green,
         Color.Blue,
-        Color(0xFF4B0082), // Индиго
-        Color(0xFFEE82EE)  // Фиолетовый
+        Color(0xFF4B0082),
+        Color(0xFFEE82EE)
     )
     val brush = remember {
         Brush.linearGradient(
@@ -202,7 +202,7 @@ fun SearchScreen(
 }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
-fun DismissBackground(dismissState: DismissState, onDelete: () -> Unit) {
+fun DismissBackground(dismissState: DismissState) {
     val color = when (dismissState.dismissDirection) {
         DismissDirection.EndToStart -> Color(0xB2CC3350)
         else -> Color.Transparent
@@ -214,20 +214,16 @@ fun DismissBackground(dismissState: DismissState, onDelete: () -> Unit) {
             .clip(shape = RoundedCornerShape(12.dp))
             .background(color),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End // Выравниваем иконку справа
+        horizontalArrangement = Arrangement.End
     ) {
-        IconButton(
-            onClick = onDelete, // Нажатие на иконку удаления
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = "Delete",
+            tint = Color.White,
             modifier = Modifier
                 .size(45.dp)
                 .padding(end = 8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete",
-                tint = Color.White
-            )
-        }
+        )
     }
 }
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -240,43 +236,33 @@ fun GoalItem(
 ) {
     val dismissState = rememberDismissState(DismissValue.Default)
     val scope = rememberCoroutineScope()
-    // Управляем видимостью элемента
     var isVisible by remember { mutableStateOf(true) }
 
     SwipeToDismiss(
         state = dismissState,
-        directions = setOf(DismissDirection.EndToStart), // Ограничиваем свайп только в одну сторону
-        dismissThresholds = { direction -> FractionalThreshold(0.66f) },
-        background = {
-            DismissBackground(dismissState, onDelete = {
-                scope.launch {
-                    isVisible = false // Скрываем элемент после нажатия на удаление
-                    delay(300) // Задержка для плавной анимации
-                    onDelete(goal) // Передаем goal для удаления
-                }
-            })
-        },
+        directions = setOf(DismissDirection.EndToStart),
+        dismissThresholds = { FractionalThreshold(0.66f) },
+        background = { DismissBackground(dismissState) },
         dismissContent = {
-            // Анимация видимости без animateItemPlacement
             AnimatedVisibility(
                 visible = isVisible,
                 enter = fadeIn(animationSpec = tween(durationMillis = 300)) + expandVertically(),
                 exit = fadeOut(animationSpec = tween(durationMillis = 300)) + shrinkVertically(),
-                modifier = modifier // Здесь мы не используем animateItemPlacement
             ) {
                 ItemInRow(goal = goal)
             }
         }
     )
-    // Удаление элемента с задержкой
-//    if (dismissState.isDismissed(DismissDirection.EndToStart)) {
-//        scope.launch {
-//            isVisible = false // Элемент исчезает
-//            delay(300) // Задержка на 300 мс перед удалением из списка
-//            onDelete(goal) // Удаление элемента
-//        }
-//    }
 
+    // Проверяем состояние свайпа
+    if (dismissState.isDismissed(DismissDirection.EndToStart)) {
+        // Запускаем анимацию скрытия и удаляем элемент
+        scope.launch {
+            isVisible = false
+            delay(300)  // Задержка для завершения анимации
+            onDelete(goal)
+        }
+    }
 }
 
 @Composable
