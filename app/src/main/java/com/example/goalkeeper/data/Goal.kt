@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
     data class Goal(
         @PrimaryKey(autoGenerate = true) val id: Long = 0,
         val name: String,
+        var isCompleted: Boolean = false,
         val difficulty: Difficulty,
         val isGenerated: Boolean = false,  // Поле для отметки, сгенерирована цель или нет
         val generationDate: Long? = null // Для сохранения даты генерации

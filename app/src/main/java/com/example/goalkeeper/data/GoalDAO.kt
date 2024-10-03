@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface GoalDao {
@@ -15,6 +16,9 @@ interface GoalDao {
 
     @Query("DELETE FROM goals WHERE isGenerated = 1 AND generationDate < :currentDate")
     suspend fun deleteOldGeneratedGoals(currentDate: Long): Int
+
+    @Update
+    suspend fun updateGoal(goal: Goal) // Метод для обновления цел
 
     @Query("DELETE FROM goals WHERE isGenerated = 1")
     suspend fun deleteAllGeneratedGoals()

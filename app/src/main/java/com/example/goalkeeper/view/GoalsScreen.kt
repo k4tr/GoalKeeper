@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,7 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -48,6 +51,7 @@ import com.example.goalkeeper.R
 import com.example.goalkeeper.data.Goal
 import com.example.goalkeeper.module.AppBottomBar
 import com.example.goalkeeper.module.BottomNavTab
+import com.example.goalkeeper.module.CustomCheckbox
 import com.example.goalkeeper.ui.theme.DarkGreen
 import com.example.goalkeeper.ui.theme.Maroon
 import com.example.goalkeeper.viewmodel.GoalViewModel
@@ -65,7 +69,7 @@ fun GoalsScreen(
     selectedTab: BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
-
+    val allGoals by goalViewModel.allGoals.collectAsState()
     val state by goalViewModel.state.collectAsState()
     val generatedGoals by goalViewModel.generatedGoals.collectAsState()
     val scrollState = rememberScrollState()
@@ -145,13 +149,18 @@ fun GoalsScreen(
                     } else {
                         LazyColumn {
                             items(generatedGoals) { goal ->
-                                GoalItem(goal)
+                                val isChecked = goal.isCompleted  // Предположим, что в модели Goal есть поле isCompleted
+                                GoalItemWithCheckbox(
+                                    goal = goal,
+                                    isChecked = isChecked,
+                                    onCheckedChange = { checked ->
+                                        goalViewModel.onGoalCheckedChange(goal, checked)
+                                    }
+                                )
                             }
                         }
                     }
                 }
-
-
             }
         }
     }
@@ -209,10 +218,26 @@ fun GoalButton(text: String, iconRes: Int, onClick: () -> Unit) {
 }
 //элементы списка (цели на день)
 @Composable
-fun GoalItem(goal: Goal) {
-        Column {
-            Spacer(modifier = Modifier.padding(8.dp))
-            Text(text = goal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(text = goal.difficulty.name, color = Color.Gray)
-        }
+fun GoalItemWithCheckbox(
+    goal: Goal,
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+    ) {
+        // Чекбокс для отметки выполнения цели
+        CustomCheckbox(
+            checked = isChecked,
+            onCheckedChange = onCheckedChange
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        // Текст цели, который зачёркивается, если цель выполнена
+        Text(
+            text = goal.name,
+            style = if (isChecked) TextStyle(textDecoration = TextDecoration.LineThrough) else TextStyle.Default,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+    }
 }

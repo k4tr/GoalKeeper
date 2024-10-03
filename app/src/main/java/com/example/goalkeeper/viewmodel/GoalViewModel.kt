@@ -37,6 +37,25 @@ class GoalViewModel(
             _allGoals.value = repository.getAllGoals()
         }
     }
+    fun updateGoal(goal: Goal) {
+        viewModelScope.launch {
+            goalDao.updateGoal(goal) // Предполагаем, что у вас есть метод обновления в DAO
+            _generatedGoals.value = _generatedGoals.value.map {
+                if (it.id == goal.id) goal else it // Обновляем список с новым состоянием
+            }
+        }
+    }
+
+    // Обработчик изменения состояния чекбокса
+    fun onGoalCheckedChange(goal: Goal, isChecked: Boolean) {
+        viewModelScope.launch {
+            val updatedGoal = goal.copy(isCompleted = isChecked)  // Обновляете состояние цели
+            repository.updateGoal(updatedGoal)  // Обновляете цель в базе данных
+            _generatedGoals.value = _generatedGoals.value.map {
+                if (it.id == goal.id) updatedGoal else it  // Обновляем список целей
+            }
+        }
+    }
 
     // Загрузка сгенерированных целей на сегодня
     fun loadGeneratedGoals() {
@@ -49,6 +68,13 @@ class GoalViewModel(
         }
     }
 
+    fun updateGoalCompletion(goal: Goal, isCompleted: Boolean) {
+        viewModelScope.launch {
+            val updatedGoal = goal.copy(isCompleted = isCompleted)
+            goalDao.updateGoal(updatedGoal)  // Обновляем цель в базе данных
+            _allGoals.value = goalDao.getAllGoals()  // Обновляем список целей
+        }
+    }
     // Проверка и удаление старых сгенерированных целей
     fun checkAndClearOldGoals() {
         viewModelScope.launch {

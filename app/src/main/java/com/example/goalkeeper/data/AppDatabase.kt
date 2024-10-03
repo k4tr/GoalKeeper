@@ -7,7 +7,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Goal::class], version = 3, exportSchema = false)
+@Database(entities = [Goal::class], version = 4, exportSchema = false)
 @TypeConverters(DifficultyConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
@@ -31,7 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     }
 
 }
-val MIGRATION_2_3 = object : Migration(2, 3) {
+val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(database: SupportSQLiteDatabase) {
         // Поле isGenerated должно быть NOT NULL, что корректно
         database.execSQL("ALTER TABLE goals ADD COLUMN isGenerated INTEGER NOT NULL DEFAULT 0")

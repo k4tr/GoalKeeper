@@ -6,15 +6,15 @@ import com.example.goalkeeper.data.GoalDao
 
 open class GoalRepository(private val goalDao: GoalDao) {
     suspend fun getAllGoals(): List<Goal> {
-        return goalDao.getAllGoals() // Предполагаем, что у вас есть такой метод в DAO
+        return goalDao.getAllGoals()
     }
 
     open suspend fun insertGoal(goal: Goal) {
         goalDao.insertGoal(goal)
     }
 
-    suspend fun deleteGoal(goalId: Long) {
-        goalDao.deleteGoal(goalId)
+    suspend fun updateGoal(goal: Goal) {
+        goalDao.updateGoal(goal)
     }
 
 }
