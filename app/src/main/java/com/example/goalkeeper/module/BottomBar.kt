@@ -1,6 +1,7 @@
 package com.example.goalkeeper.module
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
@@ -64,24 +65,24 @@ fun AppBottomBar(
         NavigationBarItem(
             icon = {
                 Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Галочка",
-                    tint = if (selectedTab == BottomNavTab.Check) Color(0xFF778FD2) else Color(0xFF3D5220) // Меняем цвет иконки
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить цель",
+                    tint = if (selectedTab == BottomNavTab.Add) Color(0xFF778FD2) else Color(0xFF3D5220) // Меняем цвет иконки
                 )
             },
             label = {
                 Text(
-                    text = "Галочка",
-                    color = if (selectedTab == BottomNavTab.Check) Color(0xFF778FD2) else Color(0xFF3D5220) // Меняем цвет текста
+                    text = "Добавить цель",
+                    color = if (selectedTab == BottomNavTab.Add) Color(0xFF778FD2) else Color(0xFF3D5220) // Меняем цвет текста
                 )
             },
-            selected = selectedTab == BottomNavTab.Check,
-            onClick = { onTabSelected(BottomNavTab.Check) }
+            selected = selectedTab == BottomNavTab.Add,
+            onClick = { onTabSelected(BottomNavTab.Add) }
         )
     }
 }
 
 // Определяем вкладки для нижней панели
 enum class BottomNavTab {
-    Home, Search, Check
+    Home, Search, Add
 }

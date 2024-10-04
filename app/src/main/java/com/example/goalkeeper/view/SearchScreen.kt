@@ -131,7 +131,7 @@ fun SearchScreen(
                 when (it) {
                     BottomNavTab.Home -> navController.navigate("goalsScreen")
                     BottomNavTab.Search -> navController.navigate("searchScreen")
-                    BottomNavTab.Check -> { /* Логика для третьей вкладки */ }
+                    BottomNavTab.Add -> navController.navigate("addGoalScreen")
                 }
             })
         }

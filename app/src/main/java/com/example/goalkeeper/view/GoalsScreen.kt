@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -37,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -58,7 +60,10 @@ import com.example.goalkeeper.viewmodel.GoalViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +74,7 @@ fun GoalsScreen(
     selectedTab: BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
+    var showTimeDialog by remember { mutableStateOf(false) }
     val allGoals by goalViewModel.allGoals.collectAsState()
     val state by goalViewModel.state.collectAsState()
     val generatedGoals by goalViewModel.generatedGoals.collectAsState()
@@ -80,7 +86,7 @@ fun GoalsScreen(
                 when (it) {
                     BottomNavTab.Home -> navController.navigate("goalsScreen")
                     BottomNavTab.Search -> navController.navigate("searchScreen")
-                    BottomNavTab.Check -> { /* Логика для третьей вкладки */ }
+                    BottomNavTab.Add -> navController.navigate("addGoalScreen")
                 }
             })
         }
@@ -100,29 +106,31 @@ fun GoalsScreen(
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
-                // Название приложения
-                Text(
-                    text = "GoalKeeper",
-                    color = DarkGreen,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+                Row(){
+                    // Название приложения
+                    Text(
+                        text = "GoalKeeper",
+                        color = DarkGreen,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                // Кнопки "Ввести цель" и "Генерация"
+                // Кнопки "Параметры" и "Генерация"
                 Row (modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ){
                     GoalButton(
-                        text = "Ввести цель",
-                        iconRes = R.drawable.icon_add,
-                        onClick = { navController.navigate("addGoalScreen") }
-                    )
-
-                    GoalButtonWithCustomIcon(
                         text = "Генерация",
-                        iconRes = R.drawable.component_1, // Используем пользовательскую иконку
+                        iconRes = R.drawable.icon_add,
                         onClick = { goalViewModel.generateGoals() }
+                    )
+                    GoalButtonWithCustomIcon(
+                        text = "Параметры",
+                        iconRes = R.drawable.component_1,
+                        onClick = { navController.navigate("settingsScreen") }
+
                     )
                 }
                 Text(
@@ -224,20 +232,52 @@ fun GoalItemWithCheckbox(
     onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
+//            .fillMaxWidth()
+//            .padding(8.dp)
+//            .background(Color.White, shape = RoundedCornerShape(12.dp)) // Белая подложка с закругленными углами
+//            .border(
+//                width = 1.dp, // Ширина обводки
+//                color = Maroon, // Цвет обводки
+//                shape = RoundedCornerShape(12.dp) // Форма обводки
+//            )
+            .padding(8.dp) // Внутренние отступы внутри элемента
     ) {
         // Чекбокс для отметки выполнения цели
         CustomCheckbox(
             checked = isChecked,
             onCheckedChange = onCheckedChange
         )
+
         Spacer(modifier = Modifier.width(8.dp))
-        // Текст цели, который зачёркивается, если цель выполнена
-        Text(
-            text = goal.name,
-            style = if (isChecked) TextStyle(textDecoration = TextDecoration.LineThrough) else TextStyle.Default,
+
+        // Колонка с именем цели, разделителем и сложностью
+        Column(
             modifier = Modifier.align(Alignment.CenterVertically)
-        )
+        ) {
+            // Текст цели
+            Text(
+                text = goal.name,
+                style = if (isChecked) TextStyle(textDecoration = TextDecoration.LineThrough) else TextStyle.Default,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            // Разделитель
+            Divider(
+                color = Maroon,
+                thickness = 1.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+
+            // Текст сложности
+            Text(
+                text = "Сложность: ${goal.difficulty.name}",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+        }
     }
+
 }

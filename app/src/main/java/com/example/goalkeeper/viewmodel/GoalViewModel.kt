@@ -19,16 +19,18 @@ class GoalViewModel(
     private val repository: GoalRepository,
     private val goalDao: GoalDao
 ) : ViewModel() {
-
+    //Состояние для генерации списка целей
     private val _generatedGoals = MutableStateFlow<List<Goal>>(emptyList())
     val generatedGoals: StateFlow<List<Goal>> = _generatedGoals
-
+    //Состояние для вывода списка целей
     private val _allGoals = MutableStateFlow<List<Goal>>(emptyList())
     val allGoals: StateFlow<List<Goal>> = _allGoals.asStateFlow()
-
     // Состояние для хранения списка целей
     private val _state = MutableStateFlow(GoalState())
     val state: StateFlow<GoalState> = _state
+    //Состояние для свободного времени пользователя
+    private val _timeForGoals = MutableStateFlow(0) // Время, введённое пользователем
+    val timeForGoals: StateFlow<Int> = _timeForGoals.asStateFlow()
 
     init {
         loadGeneratedGoals()
@@ -37,6 +39,11 @@ class GoalViewModel(
             _allGoals.value = repository.getAllGoals()
         }
     }
+
+    fun setTimeForGoals(hours: Int) {
+        _timeForGoals.value = hours
+    }
+
     fun updateGoal(goal: Goal) {
         viewModelScope.launch {
             goalDao.updateGoal(goal) // Предполагаем, что у вас есть метод обновления в DAO
@@ -68,13 +75,6 @@ class GoalViewModel(
         }
     }
 
-    fun updateGoalCompletion(goal: Goal, isCompleted: Boolean) {
-        viewModelScope.launch {
-            val updatedGoal = goal.copy(isCompleted = isCompleted)
-            goalDao.updateGoal(updatedGoal)  // Обновляем цель в базе данных
-            _allGoals.value = goalDao.getAllGoals()  // Обновляем список целей
-        }
-    }
     // Проверка и удаление старых сгенерированных целей
     fun checkAndClearOldGoals() {
         viewModelScope.launch {
@@ -82,7 +82,6 @@ class GoalViewModel(
             goalDao.deleteOldGeneratedGoals(today)  // Удаляем сгенерированные цели за прошлые дни
         }
     }
-
     // Функция для добавления цели
     fun addGoal(goal: Goal) {
         viewModelScope.launch {
@@ -96,30 +95,29 @@ class GoalViewModel(
     fun generateGoals() {
         viewModelScope.launch {
             val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
-            val existingGoals = goalDao.getGeneratedGoalsForDate(today)
 
-            if (existingGoals.isNotEmpty()) {
-                _generatedGoals.value = existingGoals
-            } else {
-                val difficultGoals = goalDao.getGoalsByDifficulty(Difficulty.HARD)
-                val mediumGoals = goalDao.getGoalsByDifficulty(Difficulty.NORMAL)
-                val easyGoals = goalDao.getGoalsByDifficulty(Difficulty.EASY)
+            val difficultGoals = goalDao.getGoalsByDifficulty(Difficulty.HARD)
+            val mediumGoals = goalDao.getGoalsByDifficulty(Difficulty.NORMAL)
+            val easyGoals = goalDao.getGoalsByDifficulty(Difficulty.EASY)
 
-                val selectedDifficultGoal = difficultGoals.randomOrNull()
-                val selectedMediumGoals = mediumGoals.shuffled().take(2)
-                val selectedEasyGoals = easyGoals.shuffled().take(2)
+            val selectedDifficultGoal = difficultGoals.randomOrNull()
+            val selectedMediumGoals = mediumGoals.shuffled().take(2)
+            val selectedEasyGoals = easyGoals.shuffled().take(2)
 
-                val newGeneratedGoals = listOfNotNull(
-                    selectedDifficultGoal
-                ) + selectedMediumGoals + selectedEasyGoals
+            val newGeneratedGoals = listOfNotNull(
+                selectedDifficultGoal
+            ) + selectedMediumGoals + selectedEasyGoals
 
-                val finalGoals = newGeneratedGoals.map {
-                    it.copy(isGenerated = true, generationDate = today)
-                }
-
-                goalDao.insertGoals(finalGoals)
-                _generatedGoals.value = finalGoals
+            val finalGoals = newGeneratedGoals.map {
+                it.copy(isGenerated = true, generationDate = today)
             }
+
+            // Очищаем ранее сгенерированные цели
+            goalDao.deleteOldGeneratedGoals(today)
+
+            // Вставляем новые сгенерированные цели
+            goalDao.insertGoals(finalGoals)
+            _generatedGoals.value = finalGoals
         }
     }
     fun deleteGoal(goal: Goal) {

@@ -52,12 +52,15 @@ import com.example.goalkeeper.di.GoalRepository
 import com.example.goalkeeper.ui.theme.DarkGreen
 import com.example.goalkeeper.viewmodel.GoalViewModel
 import androidx.compose.foundation.background
+import com.example.goalkeeper.module.BottomNavTab
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddGoalScreen(
     navController: NavController,
+    selectedTab: BottomNavTab,
+    onTabSelected: (BottomNavTab) -> Unit,
     goalViewModel: GoalViewModel,  // ViewModel для работы с данными
     onBackClick: () -> Unit,       // Функция для возврата назад
     onSaveClick: () -> Unit        // Функция для сохранения цели

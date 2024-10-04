@@ -21,6 +21,7 @@ import com.example.goalkeeper.ui.theme.GoalKeeperTheme
 import com.example.goalkeeper.view.GoalsScreen
 import com.example.goalkeeper.view.AddGoalScreen
 import com.example.goalkeeper.view.SearchScreen
+import com.example.goalkeeper.view.SettingsScreen
 import com.example.goalkeeper.viewmodel.GoalViewModel
 
 
@@ -51,7 +52,7 @@ class MainActivity : ComponentActivity() {
                                 when (tab) {
                                     BottomNavTab.Home -> navController.navigate("goalsScreen")
                                     BottomNavTab.Search -> navController.navigate("searchScreen")
-                                    BottomNavTab.Check -> { /* Логика для третьей вкладки */ }
+                                    BottomNavTab.Add -> navController.navigate("addGoalScreen")
                                 }
                             }
                         )
@@ -62,7 +63,7 @@ class MainActivity : ComponentActivity() {
                             GoalsScreen(
                                 goalViewModel = goalViewModel,
                                 onNavigateToAddGoal = {
-                                    navController.navigate("addGoalScreen")
+                                    navController.navigate("settingScreen")
                                 },
                                 navController = navController,
                                 selectedTab = selectedTab, // Передаем состояние вкладки
@@ -82,10 +83,20 @@ class MainActivity : ComponentActivity() {
                             AddGoalScreen(
                                 navController = navController,
                                 goalViewModel = goalViewModel,
+                                selectedTab = selectedTab, // Передаем состояние вкладки
+                                onTabSelected = setSelectedTab, // Передаем функцию для изменения состояния вкладки
                                 onBackClick = { navController.popBackStack() },
                                 onSaveClick = {
                                     navController.popBackStack()
                                 }
+                            )
+                        }
+                        composable("settingsScreen") {
+                            SettingsScreen(
+                                navController = navController,
+                                selectedTab = selectedTab,
+                                onTabSelected = setSelectedTab,
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                     }
