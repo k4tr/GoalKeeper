@@ -82,10 +82,10 @@ dependencies {
     implementation ("com.google.accompanist:accompanist-swiperefresh:0.36.0")
     //
     implementation ("androidx.compose.ui:ui:1.5.0")
-    implementation("androidx.compose.foundation:foundation:1.7.2")
+    implementation("androidx.compose.foundation:foundation:1.7.3")
     implementation ("androidx.compose.material3:material3:1.3.0")
-    implementation ("androidx.compose.material:material:1.7.2")
-    implementation ("androidx.compose.ui:ui-tooling-preview:1.7.2")
+    implementation ("androidx.compose.material:material:1.7.3")
+    implementation ("androidx.compose.ui:ui-tooling-preview:1.7.3")
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     // Test dependencies
     testImplementation(libs.junit)
