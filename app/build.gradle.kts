@@ -73,7 +73,6 @@ dependencies {
     implementation(libs.ui.tooling.preview)
     implementation(libs.material3)
 
-
     // Compose Navigation
     implementation(libs.androidx.navigation.compose.v273)
     implementation(libs.androidx.room.common)
