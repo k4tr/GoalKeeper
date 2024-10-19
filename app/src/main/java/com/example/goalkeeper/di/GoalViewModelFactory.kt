@@ -2,7 +2,7 @@ package com.example.goalkeeper.di
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.goalkeeper.data.GoalDao
+import com.example.goalkeeper.data.dao.GoalDao
 import com.example.goalkeeper.viewmodel.GoalViewModel
 
 class GoalViewModelFactory(

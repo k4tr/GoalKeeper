@@ -1,7 +1,7 @@
 package com.example.goalkeeper.di
 
-import com.example.goalkeeper.data.Goal
-import com.example.goalkeeper.data.GoalDao
+import com.example.goalkeeper.data.model.Goal
+import com.example.goalkeeper.data.dao.GoalDao
 
 
 open class GoalRepository(private val goalDao: GoalDao) {

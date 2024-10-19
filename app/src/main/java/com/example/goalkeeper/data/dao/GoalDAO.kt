@@ -1,10 +1,12 @@
-package com.example.goalkeeper.data
+package com.example.goalkeeper.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.example.goalkeeper.data.model.Difficulty
+import com.example.goalkeeper.data.model.Goal
 
 @Dao
 interface GoalDao {

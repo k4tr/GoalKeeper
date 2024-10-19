@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import com.example.goalkeeper.ui.theme.LightGreen
 import com.example.goalkeeper.ui.theme.ThirdColor
 import com.example.goalkeeper.ui.theme.aboba
 import com.example.goalkeeper.ui.theme.border
+import com.example.goalkeeper.viewmodel.TimeViewModel
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.max
@@ -43,8 +45,12 @@ import kotlin.math.sqrt
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CircularTimeDistribution() {
-    var allUserTime by remember { mutableStateOf(2f) }
+fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
+    var allUserTime by remember { mutableStateOf(60f) } // Инициализация значением по умолчанию
+    LaunchedEffect(Unit) {
+        // Получение времени из базы при старте
+        allUserTime = timeViewModel.getUserTime()
+    }
     var rightBoundaryEasy by remember { mutableStateOf(120f) } // Угол для сектора 1
     var rightBoundaryMed by remember { mutableStateOf(270f) } // Угол для сектора 2
     var rightBoundaryHard by remember { mutableStateOf(360f) }  // Угол для сектора 3
@@ -53,14 +59,12 @@ fun CircularTimeDistribution() {
     var iDominatingSector by remember { mutableStateOf<Int?>(0) } // Самый большой сектор
     var fCircleRadius: Float = 20f
     var bIsBoundaryReached by remember { mutableStateOf<Boolean>(false) }
-// Выбор времени через TimePicker
-    TimePickerExample { selectedTimeInMinutes ->
-        allUserTime = selectedTimeInMinutes.toFloat()
-    }
+
     // Вычисление времени для каждого сектора
-    val easyGoalMinutes = (rightBoundaryEasy / 360f) * allUserTime
-    val hardGoalMinutes = ((rightBoundaryMed - rightBoundaryEasy) / 360f) * allUserTime
-    val mediumGoalMinutes = ((rightBoundaryHard - rightBoundaryMed) / 360f) * allUserTime
+    val easyGoalMinutes = ((rightBoundaryEasy - rightBoundaryHard+360f)%360f / 360f) * allUserTime
+    val hardGoalMinutes = ((rightBoundaryMed - rightBoundaryEasy+360f)%360f / 360f) * allUserTime
+    val mediumGoalMinutes = ((rightBoundaryHard - rightBoundaryMed+360f)%360f / 360f) * allUserTime
+
 
     // Функция для вычисления угла касания относительно центра круга
     fun calculateAngle(center: Offset, touchPosition: Offset): Float {
@@ -196,20 +200,17 @@ fun CircularTimeDistribution() {
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
         Spacer(modifier = Modifier.height(66.dp))
-//        OutlinedTextField(
-//            value = (allUserTime / 60).toString(),  // Преобразуем минуты в часы
-//            onValueChange = { value ->
-//                allUserTime = (value.toFloatOrNull() ?: 2f) * 60  // Обновляем значение в минутах
-//            },
-//            label = { Text("Введите время (в часах)") },
-//            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-//            modifier = Modifier.fillMaxWidth()
-//        )
-//        Spacer(modifier = Modifier.height(36.dp))
+
         // Текст для отображения времени каждого сектора
         Text("Легкие цели: ${easyGoalMinutes.toInt()} мин.")
-        Text("Средние цели: ${mediumGoalMinutes.toInt()} мин.")
+        Text("Средние цели: ${ mediumGoalMinutes.toInt()} мин.")
         Text("Сложные цели: ${hardGoalMinutes.toInt()} мин.")
+        Text("All цели: ${allUserTime.toInt()} мин.")
+        // Выбор времени через TimePicker
+        TimePickerExample { selectedTimeInMinutes ->
+            allUserTime = selectedTimeInMinutes.toFloat()
+            timeViewModel.updateUserTime(selectedTimeInMinutes.toFloat())
+        }
     }
     Box(
         modifier = Modifier
@@ -315,9 +316,3 @@ fun CircularTimeDistribution() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun PreviewCircularTimeDistribution() {
-    CircularTimeDistribution()
-}

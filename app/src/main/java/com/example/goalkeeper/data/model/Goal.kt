@@ -1,4 +1,4 @@
-package com.example.goalkeeper.data
+package com.example.goalkeeper.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

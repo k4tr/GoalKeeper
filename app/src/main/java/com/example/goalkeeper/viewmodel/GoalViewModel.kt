@@ -3,9 +3,9 @@ package com.example.goalkeeper.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.goalkeeper.di.GoalRepository
-import com.example.goalkeeper.data.Difficulty
-import com.example.goalkeeper.data.Goal
-import com.example.goalkeeper.data.GoalDao
+import com.example.goalkeeper.data.model.Difficulty
+import com.example.goalkeeper.data.model.Goal
+import com.example.goalkeeper.data.dao.GoalDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

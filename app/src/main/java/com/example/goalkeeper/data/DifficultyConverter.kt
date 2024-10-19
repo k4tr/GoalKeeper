@@ -1,6 +1,7 @@
 package com.example.goalkeeper.data
 
 import androidx.room.TypeConverter
+import com.example.goalkeeper.data.model.Difficulty
 
 class DifficultyConverter {
     @TypeConverter

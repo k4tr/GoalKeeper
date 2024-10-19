@@ -22,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,8 +36,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.goalkeeper.module.AppBottomBar
 import com.example.goalkeeper.module.BottomNavTab
 import com.example.goalkeeper.module.CircularTimeDistribution
+import com.example.goalkeeper.module.TimePickerExample
 import com.example.goalkeeper.ui.theme.DarkGreen
 import com.example.goalkeeper.ui.theme.Maroon
+import com.example.goalkeeper.viewmodel.TimeViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -44,9 +48,11 @@ import com.example.goalkeeper.ui.theme.Maroon
 fun SettingsScreen(
     navController: NavController,
     selectedTab: BottomNavTab,
+    timeViewModel: TimeViewModel,
     onBackClick: () -> Unit,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -57,8 +63,8 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF2F2F6),  // Устанавливаем цвет фона TopAppBar
-                titleContentColor = DarkGreen,        // Цвет текста (например, как в других экранах)
-                navigationIconContentColor = DarkGreen)
+                    titleContentColor = DarkGreen,        // Цвет текста (например, как в других экранах)
+                    navigationIconContentColor = DarkGreen)
             )
             Divider(
                 color = Maroon,
@@ -85,20 +91,8 @@ fun SettingsScreen(
                 .background(Color(0xFFF2F2F6)), // Устанавливаем фон экрана
             contentAlignment = Alignment.TopStart
         ) {
-            CircularTimeDistribution()
+            CircularTimeDistribution(timeViewModel)
         }
     }
 }
 
-// Preview для демонстрации экрана настроек
-@Preview(showBackground = true)
-@Composable
-fun PreviewSettingsScreen() {
-    val navController = rememberNavController()
-    SettingsScreen(
-        navController = navController,
-        selectedTab = BottomNavTab.Home,
-        onBackClick = {},
-        onTabSelected = {}
-    )
-}

@@ -6,11 +6,16 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.goalkeeper.data.dao.GoalDao
+import com.example.goalkeeper.data.dao.TimeDao
+import com.example.goalkeeper.data.model.Goal
+import com.example.goalkeeper.data.model.TimeEntity
 
-@Database(entities = [Goal::class], version = 4, exportSchema = false)
-@TypeConverters(DifficultyConverter::class)
+@Database(entities = [Goal::class, TimeEntity::class], version = 7, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
+    abstract fun timeDao(): TimeDao
+
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -21,17 +26,15 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "goal_database"
-                )
-                    .fallbackToDestructiveMigration()  // Удаление старой базы данных и создание новой при изменении схемы
-                    .build()
+                ).fallbackToDestructiveMigration().build()
+
                 INSTANCE = instance
                 instance
             }
         }
     }
-
 }
-val MIGRATION_3_4 = object : Migration(3, 4) {
+val MIGRATION_3_4 = object : Migration(6, 7) {
     override fun migrate(database: SupportSQLiteDatabase) {
         // Поле isGenerated должно быть NOT NULL, что корректно
         database.execSQL("ALTER TABLE goals ADD COLUMN isGenerated INTEGER NOT NULL DEFAULT 0")

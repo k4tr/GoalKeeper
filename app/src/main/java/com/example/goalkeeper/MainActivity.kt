@@ -15,6 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.goalkeeper.data.AppDatabase
 import com.example.goalkeeper.di.GoalRepository
 import com.example.goalkeeper.di.GoalViewModelFactory
+import com.example.goalkeeper.di.TimeRepository
+import com.example.goalkeeper.di.TimeViewModelFactory
 import com.example.goalkeeper.module.AppBottomBar
 import com.example.goalkeeper.module.BottomNavTab
 import com.example.goalkeeper.ui.theme.GoalKeeperTheme
@@ -23,6 +25,7 @@ import com.example.goalkeeper.view.AddGoalScreen
 import com.example.goalkeeper.view.SearchScreen
 import com.example.goalkeeper.view.SettingsScreen
 import com.example.goalkeeper.viewmodel.GoalViewModel
+import com.example.goalkeeper.viewmodel.TimeViewModel
 
 
 class MainActivity : ComponentActivity() {
@@ -34,7 +37,12 @@ class MainActivity : ComponentActivity() {
         val repository = GoalRepository(goalDao)
         val goalViewModel = ViewModelProvider(this, GoalViewModelFactory(repository, goalDao))
             .get(GoalViewModel::class.java)
-
+        // Инициализация базы данных и репозитория
+        val timeDao = AppDatabase.getDatabase(this).timeDao()
+        val repositoryTime = TimeRepository(timeDao)
+        val timeViewModel = ViewModelProvider(this, TimeViewModelFactory(repositoryTime))
+            .get(TimeViewModel::class.java)
+        //UI
         setContent {
             val navController = rememberNavController()
 
@@ -95,6 +103,7 @@ class MainActivity : ComponentActivity() {
                             SettingsScreen(
                                 navController = navController,
                                 selectedTab = selectedTab,
+                                timeViewModel = timeViewModel,
                                 onTabSelected = setSelectedTab,
                                 onBackClick = { navController.popBackStack() }
                             )
