@@ -11,7 +11,7 @@ import com.example.goalkeeper.data.dao.TimeDao
 import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.data.model.TimeEntity
 
-@Database(entities = [Goal::class, TimeEntity::class], version = 7, exportSchema = false)
+@Database(entities = [Goal::class, TimeEntity::class], version = 10, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
     abstract fun timeDao(): TimeDao
@@ -34,7 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 }
-val MIGRATION_3_4 = object : Migration(6, 7) {
+val MIGRATION_3_4 = object : Migration(9, 10) {
     override fun migrate(database: SupportSQLiteDatabase) {
         // Поле isGenerated должно быть NOT NULL, что корректно
         database.execSQL("ALTER TABLE goals ADD COLUMN isGenerated INTEGER NOT NULL DEFAULT 0")

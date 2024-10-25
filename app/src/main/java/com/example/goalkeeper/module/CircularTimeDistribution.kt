@@ -47,10 +47,7 @@ import kotlin.math.sqrt
 @Composable
 fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
     var allUserTime by remember { mutableStateOf(60f) } // Инициализация значением по умолчанию
-    LaunchedEffect(Unit) {
-        // Получение времени из базы при старте
-        allUserTime = timeViewModel.getUserTime()
-    }
+
     var rightBoundaryEasy by remember { mutableStateOf(120f) } // Угол для сектора 1
     var rightBoundaryMed by remember { mutableStateOf(270f) } // Угол для сектора 2
     var rightBoundaryHard by remember { mutableStateOf(360f) }  // Угол для сектора 3
@@ -61,10 +58,23 @@ fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
     var bIsBoundaryReached by remember { mutableStateOf<Boolean>(false) }
 
     // Вычисление времени для каждого сектора
-    val easyGoalMinutes = ((rightBoundaryEasy - rightBoundaryHard+360f)%360f / 360f) * allUserTime
-    val hardGoalMinutes = ((rightBoundaryMed - rightBoundaryEasy+360f)%360f / 360f) * allUserTime
-    val mediumGoalMinutes = ((rightBoundaryHard - rightBoundaryMed+360f)%360f / 360f) * allUserTime
+    var easyGoalMinutes = ((rightBoundaryEasy - rightBoundaryHard+360f)%360f / 360f) * allUserTime
+    var mediumGoalMinutes = ((rightBoundaryMed - rightBoundaryEasy+360f)%360f / 360f) * allUserTime
+    var hardGoalMinutes = ((rightBoundaryHard - rightBoundaryMed+360f)%360f / 360f) * allUserTime
 
+    LaunchedEffect(Unit) {
+        // Получение времени из базы при старте
+        val timeEntity = timeViewModel.getUserTime()
+        if (timeEntity != null) {
+            allUserTime = timeEntity.userTime
+            easyGoalMinutes = timeEntity.easyGoalsTime
+            mediumGoalMinutes = timeEntity.mediumGoalsTime
+            hardGoalMinutes = timeEntity.hardGoalsTime
+            rightBoundaryEasy = (easyGoalMinutes/allUserTime*360f + timeEntity.savedRightBoundaryHard)%360f
+            rightBoundaryMed = ((easyGoalMinutes + mediumGoalMinutes)/allUserTime*360f + timeEntity.savedRightBoundaryHard)%360f
+            rightBoundaryHard = timeEntity.savedRightBoundaryHard
+        }
+    }
 
     // Функция для вычисления угла касания относительно центра круга
     fun calculateAngle(center: Offset, touchPosition: Offset): Float {
@@ -194,6 +204,18 @@ fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
                 }
             }
         }
+
+        easyGoalMinutes = ((rightBoundaryEasy - rightBoundaryHard+360f)%360f / 360f) * allUserTime
+        mediumGoalMinutes = ((rightBoundaryMed - rightBoundaryEasy+360f)%360f / 360f) * allUserTime
+        hardGoalMinutes = ((rightBoundaryHard - rightBoundaryMed+360f)%360f / 360f) * allUserTime
+
+        timeViewModel.updateUserTime(
+            newUserTime = allUserTime,
+            newEasyGoalsTime = easyGoalMinutes,
+            newMediumGoalsTime = mediumGoalMinutes,
+            newHardGoalsTime = hardGoalMinutes,
+            savedRightBoundaryHard = rightBoundaryHard
+        )
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -209,7 +231,17 @@ fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
         // Выбор времени через TimePicker
         TimePickerExample { selectedTimeInMinutes ->
             allUserTime = selectedTimeInMinutes.toFloat()
-            timeViewModel.updateUserTime(selectedTimeInMinutes.toFloat())
+            val easyGoalsTime = timeViewModel.easyGoalsTime.value
+            val mediumGoalsTime = timeViewModel.mediumGoalsTime.value
+            val hardGoalsTime = timeViewModel.hardGoalsTime.value
+
+            timeViewModel.updateUserTime(
+                newUserTime = selectedTimeInMinutes.toFloat(),
+                newEasyGoalsTime = easyGoalsTime,
+                newMediumGoalsTime = mediumGoalsTime,
+                newHardGoalsTime = hardGoalsTime,
+                savedRightBoundaryHard = rightBoundaryHard
+            )
         }
     }
     Box(

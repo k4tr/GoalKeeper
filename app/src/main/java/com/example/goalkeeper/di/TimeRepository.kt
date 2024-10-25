@@ -11,15 +11,33 @@ class TimeRepository(private val timeDao: TimeDao) {
     suspend fun updateTime(timeEntity: TimeEntity) {
         timeDao.updateTime(timeEntity)
     }
-    suspend fun saveUserTime(userTime: Float) {
+    suspend fun saveUserTime(
+        userTime: Float,
+        easyGoalsTime: Float,
+        mediumGoalsTime: Float,
+        hardGoalsTime: Float,
+        savedRightBoundaryHard: Float
+    ) {
         val existingTime = timeDao.getTime()
         if (existingTime != null) {
             // Если запись существует, обновляем её
-            val updatedTime = existingTime.copy(userTime = userTime)
+            val updatedTime = existingTime.copy(
+                userTime = userTime,
+                easyGoalsTime = easyGoalsTime,
+                mediumGoalsTime = mediumGoalsTime,
+                hardGoalsTime = hardGoalsTime,
+                savedRightBoundaryHard = savedRightBoundaryHard
+            )
             timeDao.updateTime(updatedTime)
         } else {
             // Если записи нет, создаем новую
-            val timeEntity = TimeEntity(userTime = userTime)
+            val timeEntity = TimeEntity(
+                userTime = userTime,
+                easyGoalsTime = easyGoalsTime,
+                mediumGoalsTime = mediumGoalsTime,
+                hardGoalsTime = hardGoalsTime,
+                savedRightBoundaryHard = savedRightBoundaryHard
+            )
             timeDao.insertTime(timeEntity)
         }
     }

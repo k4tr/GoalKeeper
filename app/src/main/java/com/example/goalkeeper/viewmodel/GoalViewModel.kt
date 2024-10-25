@@ -19,6 +19,7 @@ class GoalViewModel(
     private val repository: GoalRepository,
     private val goalDao: GoalDao
 ) : ViewModel() {
+
     //Состояние для генерации списка целей
     private val _generatedGoals = MutableStateFlow<List<Goal>>(emptyList())
     val generatedGoals: StateFlow<List<Goal>> = _generatedGoals
@@ -94,6 +95,7 @@ class GoalViewModel(
     // Генерация целей
     fun generateGoals() {
         viewModelScope.launch {
+            
             val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
 
             val difficultGoals = goalDao.getGoalsByDifficulty(Difficulty.HARD)
