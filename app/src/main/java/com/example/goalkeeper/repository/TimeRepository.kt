@@ -1,4 +1,4 @@
-package com.example.goalkeeper.di
+package com.example.goalkeeper.repository
 
 import com.example.goalkeeper.data.dao.TimeDao
 import com.example.goalkeeper.data.model.TimeEntity

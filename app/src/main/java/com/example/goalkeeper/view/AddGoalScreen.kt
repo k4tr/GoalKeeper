@@ -1,7 +1,10 @@
 package com.example.goalkeeper.view
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,14 +27,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +51,7 @@ import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.ui.theme.DarkGreen
 import com.example.goalkeeper.viewmodel.GoalViewModel
 import com.example.goalkeeper.module.BottomNavTab
+import com.example.goalkeeper.module.CustomToast
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,28 +65,20 @@ fun AddGoalScreen(
     onSaveClick: () -> Unit        // Функция для сохранения цели
 ) {
     var goalName by remember { mutableStateOf("") }
+    var isFocused by remember { mutableStateOf(false) } // Состояние фокуса для TextField
+    val context = LocalContext.current // Получаем доступ к контексту для Toast
     var selectedDifficulty by remember { mutableStateOf(Difficulty.EASY)}
+    val showToast by goalViewModel.showToast.collectAsState()
 
-    val rainbowColors: List<Color> = listOf(
-        Color.Red,
-        Color(0xFFFFA500), // Оранжевый
-        Color.Yellow,
-        Color.Green,
-        Color.Blue,
-        Color(0xFF4B0082), // Индиго
-        Color(0xFFEE82EE)  // Фиолетовый
-    )
-    val brush = remember {
-        Brush.linearGradient(
-            colors = rainbowColors
-        )
-    }
-    Scaffold(
-
-    ){
+    Scaffold(){
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        isFocused = false // Сбрасываем фокус при нажатии вне TextField
+                    })
+                }
                 .background(Color(0xF2F2F6)) // Тот же цвет фона, что и на главном экране
                 .padding(16.dp),
             verticalArrangement = Arrangement.Top,
@@ -89,24 +92,29 @@ fun AddGoalScreen(
                     if (goalName.isNotBlank()) {
                         val newGoal = Goal(name = goalName, difficulty = selectedDifficulty)
                         goalViewModel.addGoal(newGoal) // Используем метод addGoal
-                        navController.popBackStack() // Возвращаемся на главный экран после сохранения
+                        goalName = "" // Сбрасываем поле ввода названия
                     }
+
                 }, shape = RoundedCornerShape(15.dp), // округлая кнопка
                     colors = ButtonDefaults.buttonColors(   // цвет текста
                         containerColor = Color(0xFF3D5220)),
                     modifier = Modifier.padding(10.dp)) {
                     Text("Сохранить")
                 }
-
             }
-
+            // Показываем тост при необходимости
+            if (showToast) {
+                CustomToast(context, message = "Цель добавлена! :)") {
+                    goalViewModel.resetToastFlag() // Сбрасываем флаг после показа тоста
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             // Поле для ввода имени цели
             TextField(
                 value = goalName,
                 textStyle = TextStyle(
-                    brush = brush,
+                    color = Color.Black,
                     fontSize = 24.sp // Устанавливаем размер шрифта
                 ),
                 colors = TextFieldDefaults.colors(
@@ -117,7 +125,10 @@ fun AddGoalScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-
+                    .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused // Обновляем состояние фокуса
+                    }
+                    .focusRequester(FocusRequester.Default.takeIf { isFocused } ?: FocusRequester())
                     .background(Color.Transparent), // Прозрачный контейнер
                 onValueChange = { goalName = it },
                 label = { Text("Введите имя цели") }

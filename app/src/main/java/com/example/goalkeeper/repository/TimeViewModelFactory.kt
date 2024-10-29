@@ -1,4 +1,4 @@
-package com.example.goalkeeper.di
+package com.example.goalkeeper.repository
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

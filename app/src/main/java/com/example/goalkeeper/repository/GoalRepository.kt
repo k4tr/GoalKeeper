@@ -1,4 +1,4 @@
-package com.example.goalkeeper.di
+package com.example.goalkeeper.repository
 
 import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.data.dao.GoalDao
@@ -9,8 +9,9 @@ open class GoalRepository(private val goalDao: GoalDao) {
         return goalDao.getAllGoals()
     }
 
-    open suspend fun insertGoal(goal: Goal) {
-        goalDao.insertGoal(goal)
+    suspend fun insertGoal(goal: Goal) {
+        val goalToInsert = if (goal.isGenerated) goal.copy(generationDate = System.currentTimeMillis()) else goal
+        goalDao.insertGoal(goalToInsert)
     }
 
     suspend fun updateGoal(goal: Goal) {

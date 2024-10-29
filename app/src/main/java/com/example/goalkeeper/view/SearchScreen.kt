@@ -10,6 +10,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -63,6 +64,12 @@ import androidx.compose.material.rememberDismissState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import com.example.goalkeeper.module.CustomToast
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,22 +91,8 @@ fun SearchScreen(
     var filteredGoals = allGoals.filter {
         it.name.contains(searchQuery.value, ignoreCase = true)
     }
-    //разноцветный ввод текста))))
-    val rainbowColors: List<Color> = listOf(
-        Color.Red,
-        Color(0xFFFFA500),
-        Color.Yellow,
-        Color.Green,
-        Color.Blue,
-        Color(0xFF4B0082),
-        Color(0xFFEE82EE)
-    )
-    val brush = remember {
-        Brush.linearGradient(
-            colors = rainbowColors
-        )
-    }
-    val scope = rememberCoroutineScope()
+    var isFocused by remember { mutableStateOf(false) } // Состояние фокуса для TextField
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -124,7 +117,15 @@ fun SearchScreen(
         }
 
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        isFocused = false // Сбрасываем фокус при нажатии вне TextField
+                    })
+                }
+        ) {
             Spacer(modifier = Modifier.height(66.dp))
 
             // Поле для ввода поиска
@@ -134,15 +135,19 @@ fun SearchScreen(
                 label = {
                     Text(
                         text = "Поиск",
-                        color = Color.Gray // Цвет метки
+                        color = Color.Gray
                     )
                 },
                 textStyle = TextStyle(
-                    brush = brush,
-                    fontSize = 16.sp // Устанавливаем размер шрифта
+                    color = Color.Black,
+                    fontSize = 16.sp
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused // Обновляем состояние фокуса
+                    }
+                    .focusRequester(FocusRequester.Default.takeIf { isFocused } ?: FocusRequester())
                     .border(
                         width = 1.dp, // Ширина обводки
                         color = Maroon, // Цвет обводки
@@ -176,9 +181,12 @@ fun SearchScreen(
                             // Удаление цели из ViewModel
                             goalViewModel.deleteGoal(deletedGoal)
                             // Обновляем список после удаления
+
                             filteredGoals = filteredGoals.toMutableList().apply {
                                 remove(deletedGoal)
+
                             }
+
                         }
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -256,21 +264,20 @@ fun GoalItem(
 fun ItemInRow(goal: Goal) {
     Box(
         modifier = Modifier
-//            .padding(vertical = 8.dp) // Отступы между элементами
             .background(Color.White, shape = RoundedCornerShape(12.dp)) // Белая подложка с закругленными углами
             .border(
                 width = 1.dp, // Ширина обводки
                 color = Maroon, // Цвет обводки
                 shape = RoundedCornerShape(12.dp) // Форма обводки
             )
-            .padding(16.dp) // Внутренние отступы внутри элемента
+            .padding(16.dp)
     ) {
         Column {
             Text(text = goal.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Divider(
-                color = Maroon, // Цвет черты
-                thickness = 1.dp, // Толщина черты
-                modifier = Modifier.padding(vertical = 6.dp) // Отступы сверху
+                color = Maroon,
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 6.dp)
             )
             Text(text = goal.difficulty.name, color = Color.Gray)
         }

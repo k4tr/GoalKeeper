@@ -1,9 +1,16 @@
 package com.example.goalkeeper.view
 
 import android.annotation.SuppressLint
+import android.util.Log
+import androidx.compose.material3.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.runtime.*
+
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,14 +27,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -40,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import androidx.navigation.NavController
 import com.example.goalkeeper.R
 import com.example.goalkeeper.data.model.Goal
@@ -53,7 +64,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.example.goalkeeper.module.CustomToast
+import kotlinx.coroutines.launch
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,11 +80,12 @@ fun GoalsScreen(
     selectedTab: BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
-    var showTimeDialog by remember { mutableStateOf(false) }
-    val allGoals by goalViewModel.allGoals.collectAsState()
-    val state by goalViewModel.state.collectAsState()
-    val generatedGoals by goalViewModel.generatedGoals.collectAsState()
-    val scrollState = rememberScrollState()
+
+    val generatedGoals by goalViewModel.generatedGoals.collectAsState(initial = emptyList())
+    val showToast by goalViewModel.showToast.collectAsState()
+    val toastMessage by goalViewModel.toastMessage.collectAsState()
+    val context = LocalContext.current // Получаем доступ к контексту для Toast
+
     Scaffold(
         bottomBar = {
             AppBottomBar(selectedTab = selectedTab, onTabSelected = {
@@ -114,14 +131,25 @@ fun GoalsScreen(
                     GoalButton(
                         text = "Генерация",
                         iconRes = R.drawable.icon_add,
-                        onClick = { goalViewModel.generateGoals() }
+                        onClick = {
+
+                            goalViewModel.generateGoals()
+                        }
+
                     )
+
                     GoalButtonWithCustomIcon(
                         text = "Параметры",
                         iconRes = R.drawable.component_1,
                         onClick = { navController.navigate("settingsScreen") }
 
                     )
+                }
+                // Проверяем и отображаем кастомный Toast
+                if (showToast) {
+                    CustomToast(context = context, message = toastMessage) {
+                        goalViewModel.resetToastFlag() // Сбрасываем флаг после показа тоста
+                    }
                 }
                 Text(
                     text = "Цели на сегодня:",
@@ -222,14 +250,6 @@ fun GoalItemWithCheckbox(
     onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(8.dp)
-//            .background(Color.White, shape = RoundedCornerShape(12.dp)) // Белая подложка с закругленными углами
-//            .border(
-//                width = 1.dp, // Ширина обводки
-//                color = Maroon, // Цвет обводки
-//                shape = RoundedCornerShape(12.dp) // Форма обводки
-//            )
             .padding(8.dp) // Внутренние отступы внутри элемента
     ) {
         // Чекбокс для отметки выполнения цели

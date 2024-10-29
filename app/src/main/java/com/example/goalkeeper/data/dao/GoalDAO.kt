@@ -36,7 +36,4 @@ interface GoalDao {
 
     @Query("DELETE FROM goals WHERE id = :goalId")
     suspend fun deleteGoal(goalId: Long)
-
-    @Insert
-    suspend fun insert(it: Goal)
 }

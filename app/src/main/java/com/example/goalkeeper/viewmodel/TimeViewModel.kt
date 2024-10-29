@@ -3,7 +3,7 @@ package com.example.goalkeeper.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.goalkeeper.data.model.TimeEntity
-import com.example.goalkeeper.di.TimeRepository
+import com.example.goalkeeper.repository.TimeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,10 +12,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.goalkeeper.data.AppDatabase
-import com.example.goalkeeper.di.GoalRepository
-import com.example.goalkeeper.di.GoalViewModelFactory
-import com.example.goalkeeper.di.TimeRepository
-import com.example.goalkeeper.di.TimeViewModelFactory
+import com.example.goalkeeper.repository.GoalRepository
+import com.example.goalkeeper.repository.GoalViewModelFactory
+import com.example.goalkeeper.repository.TimeRepository
+import com.example.goalkeeper.repository.TimeViewModelFactory
 import com.example.goalkeeper.module.AppBottomBar
 import com.example.goalkeeper.module.BottomNavTab
 import com.example.goalkeeper.ui.theme.GoalKeeperTheme
@@ -32,16 +31,18 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val goalDao = AppDatabase.getDatabase(this).goalDao()
-        val repository = GoalRepository(goalDao)
-        val goalViewModel = ViewModelProvider(this, GoalViewModelFactory(repository, goalDao))
-            .get(GoalViewModel::class.java)
-        // Инициализация базы данных и репозитория
         val timeDao = AppDatabase.getDatabase(this).timeDao()
         val repositoryTime = TimeRepository(timeDao)
+        val goalDao = AppDatabase.getDatabase(this).goalDao()
+        val repository = GoalRepository(goalDao)
+
+        val goalViewModel = ViewModelProvider(
+            this,
+            GoalViewModelFactory(repository, goalDao, timeDao, repositoryTime)
+        ).get(GoalViewModel::class.java)
         val timeViewModel = ViewModelProvider(this, TimeViewModelFactory(repositoryTime))
             .get(TimeViewModel::class.java)
+
         //UI
         setContent {
             val navController = rememberNavController()
@@ -104,6 +105,7 @@ class MainActivity : ComponentActivity() {
                                 navController = navController,
                                 selectedTab = selectedTab,
                                 timeViewModel = timeViewModel,
+
                                 onTabSelected = setSelectedTab,
                                 onBackClick = { navController.popBackStack() }
                             )
