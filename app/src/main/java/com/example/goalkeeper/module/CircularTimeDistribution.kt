@@ -4,14 +4,17 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -61,6 +64,14 @@ fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
     var easyGoalMinutes = ((rightBoundaryEasy - rightBoundaryHard+360f)%360f / 360f) * allUserTime
     var mediumGoalMinutes = ((rightBoundaryMed - rightBoundaryEasy+360f)%360f / 360f) * allUserTime
     var hardGoalMinutes = ((rightBoundaryHard - rightBoundaryMed+360f)%360f / 360f) * allUserTime
+    //  Примерное время
+    val avgEasyGoalTime = 10f // примерное среднее время для лёгкой цели
+    val avgMediumGoalTime = 15f // для средней цели
+    val avgHardGoalTime = 30f // для сложной цели
+    // Рассчитываем количество целей для каждой категории на основе времени
+    var easyGoalsCount = (easyGoalMinutes / avgEasyGoalTime).toInt()
+    var mediumGoalsCount = (mediumGoalMinutes / avgMediumGoalTime).toInt()
+    var hardGoalsCount = (hardGoalMinutes / avgHardGoalTime).toInt()
 
     LaunchedEffect(Unit) {
         // Получение времени из базы при старте
@@ -218,17 +229,151 @@ fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
         )
     }
     Column(
+        modifier = Modifier
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+        verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(66.dp))
+        Spacer(modifier = Modifier.padding(36.dp))
+        Box(
+            modifier = Modifier
+                .wrapContentSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
 
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .size(300.dp)
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = { touchPosition ->
+                                val center = Offset(
+                                    (size.width / 2).toFloat(),
+                                    (size.height / 2).toFloat()
+                                )
+                                val canvasSize = min(size.width, size.height)
+                                val radius = canvasSize / 2 * 0.8f
+                                var radianAngle =
+                                    Math.toRadians((rightBoundaryEasy - 90f).toDouble())
+                                var handleX = center.x + cos(radianAngle) * radius
+                                var handleY = center.y + sin(radianAngle) * radius
+                                val center1 = Offset(handleX.toFloat(), handleY.toFloat())
+
+                                radianAngle = Math.toRadians((rightBoundaryMed - 90f).toDouble())
+                                handleX = center.x + cos(radianAngle) * radius
+                                handleY = center.y + sin(radianAngle) * radius
+                                val center2 = Offset(handleX.toFloat(), handleY.toFloat())
+
+                                radianAngle = Math.toRadians((rightBoundaryHard - 90f).toDouble())
+                                handleX = center.x + cos(radianAngle) * radius
+                                handleY = center.y + sin(radianAngle) * radius
+                                val center3 = Offset(handleX.toFloat(), handleY.toFloat())
+                                onDragStart(touchPosition, center, center1, center2, center3)
+                            },
+                            onDrag = { change, dragAmount ->
+                                val center =
+                                    Offset((size.width / 2).toFloat(), (size.height / 2).toFloat())
+                                val touchPosition = change.position
+                                val angle = calculateAngle(center, touchPosition)
+
+                                // Обновляем углы секторов
+                                onDrag(angle, dragAmount.x)
+                            }
+                        )
+                    }
+            ) {
+                val canvasSize = size.minDimension
+                val radius = canvasSize / 2 * 0.8f
+                val center = Offset(size.width / 2, size.height / 2)
+
+                // Отрисовка секторов
+                drawArc(
+                    color = LightGreen,
+                    startAngle = (-90f + rightBoundaryHard + 360f) % 360f,
+                    sweepAngle = if (iDominatingSector == 1 && rightBoundaryMed == rightBoundaryHard && rightBoundaryMed == rightBoundaryEasy) 360f else (rightBoundaryEasy - rightBoundaryHard + 720f) % 360f,
+                    useCenter = true,
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+                drawArc(
+                    color = aboba,
+                    startAngle = (-90f + rightBoundaryEasy + 360f) % 360f,
+                    sweepAngle = if (iDominatingSector == 2 && rightBoundaryEasy == rightBoundaryHard && rightBoundaryMed == rightBoundaryEasy) 360f else (rightBoundaryMed - rightBoundaryEasy + 720f) % 360f,
+                    useCenter = true,
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+                drawArc(
+                    color = ThirdColor,
+                    startAngle = (-90f + rightBoundaryMed + 360f) % 360f,
+                    sweepAngle = if (iDominatingSector == 3 && rightBoundaryMed == rightBoundaryEasy && rightBoundaryMed == rightBoundaryHard) 360f else (rightBoundaryHard - rightBoundaryMed + 720f) % 360f,
+                    useCenter = true,
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2)
+                )
+
+                // Отрисовка кнопок на границах секторов
+                fun drawHandle(angle: Float, color: Color) {
+                    val radianAngle = Math.toRadians((angle - 90).toDouble())
+                    val handleX = center.x + cos(radianAngle) * radius
+                    val handleY = center.y + sin(radianAngle) * radius
+
+                    drawCircle(
+                        color = color,
+                        radius = fCircleRadius,
+                        center = Offset(handleX.toFloat(), handleY.toFloat())
+                    )
+                }
+
+                // Отрисовываем кнопки на границе между секторами
+                drawHandle(rightBoundaryEasy, border)
+                drawHandle(rightBoundaryMed, border)
+                drawHandle(rightBoundaryHard, border)
+
+                // Отрисовка границ круга
+                drawCircle(
+                    color = border,
+                    radius = radius,
+                    style = Stroke(4.dp.toPx())
+                )
+            }
+
+        }
         // Текст для отображения времени каждого сектора
-        Text("Легкие цели: ${easyGoalMinutes.toInt()} мин.")
-        Text("Средние цели: ${ mediumGoalMinutes.toInt()} мин.")
-        Text("Сложные цели: ${hardGoalMinutes.toInt()} мин.")
-        Text("All цели: ${allUserTime.toInt()} мин.")
-        // Выбор времени через TimePicker
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            Text("Заданное вами время в минутах: ${allUserTime.toInt()} мин.")
+            Spacer(modifier = Modifier.padding(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Легкие цели занимают: ${easyGoalMinutes.toInt()} мин.")
+                Text("${easyGoalsCount} цели")
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Легкие цели занимают: ${mediumGoalMinutes.toInt()} мин.")
+                Text("${mediumGoalsCount} цели")
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Легкие цели занимают: ${hardGoalMinutes.toInt()} мин.")
+                Text("${hardGoalsCount} цели")
+            }
+
+
+        }
+
+        // Кнопка для выбора времени
+        Spacer(modifier = Modifier.height(16.dp))
         TimePickerExample { selectedTimeInMinutes ->
             allUserTime = selectedTimeInMinutes.toFloat()
             val easyGoalsTime = timeViewModel.easyGoalsTime.value
@@ -244,107 +389,6 @@ fun CircularTimeDistribution(timeViewModel: TimeViewModel) {
             )
         }
     }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Canvas(
-            modifier = Modifier
-                .size(300.dp)
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { touchPosition ->
-                            val center = Offset((size.width / 2).toFloat(),
-                                (size.height / 2).toFloat()
-                            )
-                            val canvasSize = min(size.width, size.height)
-                            val radius = canvasSize / 2 * 0.8f
-                            var radianAngle = Math.toRadians((rightBoundaryEasy - 90f).toDouble())
-                            var handleX = center.x + cos(radianAngle) * radius
-                            var handleY = center.y + sin(radianAngle) * radius
-                            val center1 = Offset(handleX.toFloat(), handleY.toFloat())
 
-                            radianAngle = Math.toRadians((rightBoundaryMed - 90f).toDouble())
-                            handleX = center.x + cos(radianAngle) * radius
-                            handleY = center.y + sin(radianAngle) * radius
-                            val center2 = Offset(handleX.toFloat(), handleY.toFloat())
-
-                            radianAngle = Math.toRadians((rightBoundaryHard - 90f).toDouble())
-                            handleX = center.x + cos(radianAngle) * radius
-                            handleY = center.y + sin(radianAngle) * radius
-                            val center3 = Offset(handleX.toFloat(), handleY.toFloat())
-                            onDragStart(touchPosition, center, center1, center2, center3)
-                        },
-                        onDrag = { change, dragAmount ->
-                            val center = Offset((size.width / 2).toFloat(), (size.height / 2).toFloat())
-                            val touchPosition = change.position
-                            val angle = calculateAngle(center, touchPosition)
-
-                            // Обновляем углы секторов
-                            onDrag(angle, dragAmount.x )
-                        }
-                    )
-                }
-        ) {
-            val canvasSize = size.minDimension
-            val radius = canvasSize / 2 * 0.8f
-            val center = Offset(size.width / 2, size.height / 2)
-
-            // Отрисовка секторов
-            drawArc(
-                color = LightGreen,
-                startAngle = (-90f + rightBoundaryHard + 360f)%360f,
-                sweepAngle = if (iDominatingSector == 1 && rightBoundaryMed == rightBoundaryHard && rightBoundaryMed == rightBoundaryEasy) 360f else (rightBoundaryEasy- rightBoundaryHard + 720f)%360f ,
-                useCenter = true,
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2)
-            )
-            drawArc(
-                color = aboba,
-                startAngle = (-90f + rightBoundaryEasy + 360f)%360f,
-                sweepAngle = if (iDominatingSector == 2 && rightBoundaryEasy == rightBoundaryHard && rightBoundaryMed == rightBoundaryEasy) 360f else (rightBoundaryMed - rightBoundaryEasy + 720f)%360f,
-                useCenter = true,
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2)
-            )
-            drawArc(
-                color = ThirdColor,
-                startAngle = (-90f + rightBoundaryMed + 360f)%360f,
-                sweepAngle = if (iDominatingSector == 3 && rightBoundaryMed == rightBoundaryEasy && rightBoundaryMed == rightBoundaryHard) 360f else (rightBoundaryHard - rightBoundaryMed + 720f)%360f,
-                useCenter = true,
-                topLeft = Offset(center.x - radius, center.y - radius),
-                size = Size(radius * 2, radius * 2)
-            )
-
-            // Отрисовка кнопок на границах секторов
-            fun drawHandle(angle: Float, color: Color) {
-                val radianAngle = Math.toRadians((angle - 90).toDouble())
-                val handleX = center.x + cos(radianAngle) * radius
-                val handleY = center.y + sin(radianAngle) * radius
-
-                drawCircle(
-                    color = color,
-                    radius = fCircleRadius,
-                    center = Offset(handleX.toFloat(), handleY.toFloat())
-                )
-            }
-
-            // Отрисовываем кнопки на границе между секторами
-            drawHandle(rightBoundaryEasy, border)
-            drawHandle(rightBoundaryMed, border)
-            drawHandle(rightBoundaryHard, border)
-
-
-            // Отрисовка границ круга
-            drawCircle(
-                color = border,
-                radius = radius,
-                style = Stroke(4.dp.toPx())
-            )
-        }
-
-    }
 }
 

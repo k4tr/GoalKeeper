@@ -1,5 +1,7 @@
 package com.example.goalkeeper.viewmodel
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.goalkeeper.repository.GoalRepository
@@ -47,6 +49,9 @@ class GoalViewModel(
     private val _toastMessage = MutableStateFlow("")
     val toastMessage: StateFlow<String> = _toastMessage
 
+    private val _easyGoalsCount = MutableLiveData<Int>()
+    val easyGoalsCount: LiveData<Int> get() = _easyGoalsCount
+
     init {
         loadTimeSettings()
         loadGeneratedGoals()
@@ -89,7 +94,6 @@ class GoalViewModel(
         }
     }
 
-
     // Загрузка сгенерированных целей на сегодня
     fun loadGeneratedGoals() {
         viewModelScope.launch {
@@ -122,6 +126,7 @@ class GoalViewModel(
             _showToast.value = true // Устанавливаем флаг
         }
     }
+
     // Генерация целей
     fun generateGoals() {
 

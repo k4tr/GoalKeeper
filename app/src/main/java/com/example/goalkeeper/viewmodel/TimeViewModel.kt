@@ -22,6 +22,7 @@ class TimeViewModel(private val repository: TimeRepository) : ViewModel() {
     val hardGoalsTime: StateFlow<Float> get() = _hardGoalsTime
     private val _savedRightBoundaryHard = MutableStateFlow(360f)
     val savedRightBoundaryHard: StateFlow<Float> get() = _savedRightBoundaryHard
+
     init {
         // Загружаем данные из базы при инициализации
         viewModelScope.launch {
