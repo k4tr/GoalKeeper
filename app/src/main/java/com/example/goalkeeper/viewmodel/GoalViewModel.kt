@@ -51,6 +51,9 @@ class GoalViewModel(
 
     private val _easyGoalsCount = MutableLiveData<Int>()
     val easyGoalsCount: LiveData<Int> get() = _easyGoalsCount
+    private val _activeDays = MutableStateFlow<Set<Long>>(emptySet())
+    val activeDays: StateFlow<Set<Long>> = _activeDays
+
 
     init {
         loadTimeSettings()
@@ -86,10 +89,15 @@ class GoalViewModel(
     // Обработчик изменения состояния чекбокса
     fun onGoalCheckedChange(goal: Goal, isChecked: Boolean) {
         viewModelScope.launch {
-            val updatedGoal = goal.copy(isCompleted = isChecked)  // Обновляете состояние цели
-            repository.updateGoal(updatedGoal)  // Обновляете цель в базе данных
-            _generatedGoals.value = _generatedGoals.value.map {
-                if (it.id == goal.id) updatedGoal else it  // Обновляем список целей
+            val updatedGoal = goal.copy(isCompleted = isChecked)
+            repository.updateGoal(updatedGoal)
+            _generatedGoals.value = _generatedGoals.value.map { if (it.id == goal.id) updatedGoal else it }
+
+            // Обновляем активные дни, если цель отмечена как выполненная
+            if (isChecked) {
+                goal.generationDate?.let { day ->
+                    _activeDays.value = _activeDays.value + day
+                }
             }
         }
     }
@@ -158,7 +166,7 @@ class GoalViewModel(
                 // Устанавливаем сообщение для Toast
                 _toastMessage.value = "Недостаточно введенных целей для корректной генерации"
                 _showToast.value = true // Показываем Toast
-               return@launch
+//               return@launch
             }
 
             val mediumGoals = goalDao.getGoalsByDifficulty(Difficulty.NORMAL)

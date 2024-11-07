@@ -1,7 +1,9 @@
 package com.example.goalkeeper.view
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +29,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -52,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.navigation.NavController
-import com.example.goalkeeper.R
 import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.module.AppBottomBar
 import com.example.goalkeeper.module.BottomNavTab
@@ -67,9 +69,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.example.goalkeeper.R
+import com.example.goalkeeper.module.ActivityCalendar
 import com.example.goalkeeper.module.CustomToast
 import kotlinx.coroutines.launch
+import java.time.DateTimeException
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,11 +89,19 @@ fun GoalsScreen(
     selectedTab: BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
-
+    val scrollState = rememberScrollState() // Создаем состояние прокрутки
     val generatedGoals by goalViewModel.generatedGoals.collectAsState(initial = emptyList())
     val showToast by goalViewModel.showToast.collectAsState()
     val toastMessage by goalViewModel.toastMessage.collectAsState()
     val context = LocalContext.current // Получаем доступ к контексту для Toast
+    val activeDays by goalViewModel.activeDays.collectAsState()
+    val activeDaysList: List<LocalDate> = activeDays.mapNotNull { millis ->
+        try {
+            Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+        } catch (e: DateTimeException) {
+            null
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -97,15 +114,17 @@ fun GoalsScreen(
                 }
             })
         }
-    ) {
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xF2F2F6)), // Устанавливаем фон экрана
+                .background(Color(0xFFF2F2F6)), // Устанавливаем фон экрана
             contentAlignment = Alignment.TopStart
         ) {
             Column(
-                modifier = Modifier.padding(22.dp)
+                modifier = Modifier
+                    .padding(22.dp)
+                    .padding(paddingValues)
             ) {
                 // Отображение текущей даты
                 Text(
@@ -187,6 +206,7 @@ fun GoalsScreen(
                         }
                     }
                 }
+                ActivityCalendar(activeDays = activeDaysList)
             }
         }
     }

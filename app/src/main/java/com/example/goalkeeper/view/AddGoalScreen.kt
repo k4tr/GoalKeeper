@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -88,7 +90,7 @@ fun AddGoalScreen(
                 IconButton(onClick = { onBackClick() }) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
                 }
-                ElevatedButton(onClick = {
+                Button(onClick = {
                     if (goalName.isNotBlank()) {
                         val newGoal = Goal(name = goalName, difficulty = selectedDifficulty)
                         goalViewModel.addGoal(newGoal) // Используем метод addGoal
@@ -97,9 +99,10 @@ fun AddGoalScreen(
 
                 }, shape = RoundedCornerShape(15.dp), // округлая кнопка
                     colors = ButtonDefaults.buttonColors(   // цвет текста
-                        containerColor = Color(0xFF3D5220)),
+                        containerColor = Color(0xFF8E8E92)),
+
                     modifier = Modifier.padding(10.dp)) {
-                    Text("Сохранить")
+                    Text("Сохранить", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Normal)
                 }
             }
             // Показываем тост при необходимости
