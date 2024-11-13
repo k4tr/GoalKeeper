@@ -1,5 +1,8 @@
 package com.example.goalkeeper.viewmodel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,6 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 data class GoalState(
     val goals: List<Goal?> = emptyList()
@@ -51,8 +56,8 @@ class GoalViewModel(
 
     private val _easyGoalsCount = MutableLiveData<Int>()
     val easyGoalsCount: LiveData<Int> get() = _easyGoalsCount
-    private val _activeDays = MutableStateFlow<Set<Long>>(emptySet())
-    val activeDays: StateFlow<Set<Long>> = _activeDays
+    private val _activeDays = MutableStateFlow<List<Long>>(emptyList()) // список с датами активности в миллисекундах
+    val activeDays: StateFlow<List<Long>> get() = _activeDays
 
 
     init {
@@ -63,7 +68,13 @@ class GoalViewModel(
             _allGoals.value = repository.getAllGoals()
         }
     }
-
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun addActiveDay(date: LocalDate) {
+        val millis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        if (!_activeDays.value.contains(millis)) {
+            _activeDays.value = _activeDays.value + millis
+        }
+    }
     private fun loadTimeSettings() {
         viewModelScope.launch {
             val timeSettings = timeDao.getTime() // Получение TimeEntity из базы данных
@@ -85,20 +96,18 @@ class GoalViewModel(
             }
         }
     }
-
     // Обработчик изменения состояния чекбокса
-    fun onGoalCheckedChange(goal: Goal, isChecked: Boolean) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun onGoalCheckedChange(goal: Goal, isCompleted: Boolean) {
         viewModelScope.launch {
-            val updatedGoal = goal.copy(isCompleted = isChecked)
-            repository.updateGoal(updatedGoal)
-            _generatedGoals.value = _generatedGoals.value.map { if (it.id == goal.id) updatedGoal else it }
+            // Обновление состояния выполнения цели
+            goalDao.updateGoal(goal.copy(isCompleted = isCompleted))
 
-            // Обновляем активные дни, если цель отмечена как выполненная
-            if (isChecked) {
-                goal.generationDate?.let { day ->
-                    _activeDays.value = _activeDays.value + day
-                }
+            // Если цель отмечена как выполненная, обновляем активный день
+            if (isCompleted) {
+                addActiveDay(LocalDate.now())
             }
+            loadGeneratedGoals()
         }
     }
 

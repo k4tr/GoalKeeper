@@ -94,7 +94,7 @@ fun GoalsScreen(
     val showToast by goalViewModel.showToast.collectAsState()
     val toastMessage by goalViewModel.toastMessage.collectAsState()
     val context = LocalContext.current // Получаем доступ к контексту для Toast
-    val activeDays by goalViewModel.activeDays.collectAsState()
+    val activeDays by goalViewModel.activeDays.collectAsState() // теперь это поток данных
     val activeDaysList: List<LocalDate> = activeDays.mapNotNull { millis ->
         try {
             Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -194,10 +194,9 @@ fun GoalsScreen(
                     } else {
                         LazyColumn {
                             items(generatedGoals) { goal ->
-                                val isChecked = goal.isCompleted  // Предположим, что в модели Goal есть поле isCompleted
                                 GoalItemWithCheckbox(
                                     goal = goal,
-                                    isChecked = isChecked,
+                                    isChecked = goal.isCompleted,
                                     onCheckedChange = { checked ->
                                         goalViewModel.onGoalCheckedChange(goal, checked)
                                     }
