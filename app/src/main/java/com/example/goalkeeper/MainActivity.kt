@@ -1,9 +1,11 @@
 package com.example.goalkeeper
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +30,7 @@ import com.example.goalkeeper.viewmodel.TimeViewModel
 
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,10 +38,11 @@ class MainActivity : ComponentActivity() {
         val repositoryTime = TimeRepository(timeDao)
         val goalDao = AppDatabase.getDatabase(this).goalDao()
         val repository = GoalRepository(goalDao)
+        val activeDayDao = AppDatabase.getDatabase(this).activeDayDao()
 
         val goalViewModel = ViewModelProvider(
             this,
-            GoalViewModelFactory(repository, goalDao, timeDao, repositoryTime)
+            GoalViewModelFactory(repository, goalDao, timeDao, repositoryTime, activeDayDao)
         ).get(GoalViewModel::class.java)
         val timeViewModel = ViewModelProvider(this, TimeViewModelFactory(repositoryTime))
             .get(TimeViewModel::class.java)

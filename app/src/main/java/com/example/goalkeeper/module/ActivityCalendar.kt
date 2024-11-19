@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -81,7 +82,7 @@ fun ActivityCalendar(
 
             // Ячейки для каждого дня месяца
             items(daysInMonth) { day ->
-                val currentDate = selectedMonth.atDay(day + 1) // День месяца
+                val currentDate = selectedMonth.atDay(day + 1)
                 val isActive = activeDays.contains(currentDate)
 
                 Box(

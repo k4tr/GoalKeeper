@@ -2,15 +2,11 @@ package com.example.goalkeeper.view
 
 import android.annotation.SuppressLint
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.material3.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.runtime.*
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Arrangement
@@ -24,26 +20,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,11 +41,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.navigation.NavController
-import com.example.goalkeeper.data.model.Goal
+
 import com.example.goalkeeper.module.AppBottomBar
 import com.example.goalkeeper.module.BottomNavTab
 import com.example.goalkeeper.module.CustomCheckbox
@@ -65,14 +54,12 @@ import com.example.goalkeeper.viewmodel.GoalViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.goalkeeper.R
+import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.module.ActivityCalendar
 import com.example.goalkeeper.module.CustomToast
-import kotlinx.coroutines.launch
 import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
@@ -94,7 +81,7 @@ fun GoalsScreen(
     val showToast by goalViewModel.showToast.collectAsState()
     val toastMessage by goalViewModel.toastMessage.collectAsState()
     val context = LocalContext.current // Получаем доступ к контексту для Toast
-    val activeDays by goalViewModel.activeDays.collectAsState()
+    val activeDays by goalViewModel.activeDays.collectAsState() // теперь это поток данных
     val activeDaysList: List<LocalDate> = activeDays.mapNotNull { millis ->
         try {
             Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
@@ -147,7 +134,7 @@ fun GoalsScreen(
                 Row (modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ){
-                    GoalButton(
+                    GoalButtonGeneration(
                         text = "Генерация",
                         iconRes = R.drawable.icon_add,
                         onClick = {
@@ -157,7 +144,7 @@ fun GoalsScreen(
 
                     )
 
-                    GoalButtonWithCustomIcon(
+                    GoalButtonParameters(
                         text = "Параметры",
                         iconRes = R.drawable.component_1,
                         onClick = { navController.navigate("settingsScreen") }
@@ -194,10 +181,9 @@ fun GoalsScreen(
                     } else {
                         LazyColumn {
                             items(generatedGoals) { goal ->
-                                val isChecked = goal.isCompleted  // Предположим, что в модели Goal есть поле isCompleted
                                 GoalItemWithCheckbox(
                                     goal = goal,
-                                    isChecked = isChecked,
+                                    isChecked = goal.isCompleted,
                                     onCheckedChange = { checked ->
                                         goalViewModel.onGoalCheckedChange(goal, checked)
                                     }
@@ -218,48 +204,62 @@ fun getCurrentDate(): String {
     return sdf.format(Date())
 }
 @Composable
-fun GoalButtonWithCustomIcon(text: String, iconRes: Int, onClick: () -> Unit) {
+fun GoalButtonParameters(text: String, iconRes: Int, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
         shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)),
         modifier = Modifier
-            .width(200.dp)
+            .fillMaxWidth() // Сделаем кнопки одинаковыми по ширине
             .height(58.dp)
             .border(
-                width = 1.dp, // Ширина обводки
-                color = Maroon, // Цвет обводки
-                shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)) // Форма обводки
+                width = 1.dp,
+                color = Maroon,
+                shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp))
             )
     ) {
         Image(painter = painterResource(id = iconRes),
             contentDescription = null,
             modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text, color = DarkGreen, fontSize = 16.sp, fontWeight = FontWeight.Normal)
+        Text(
+            text = text,
+            color = DarkGreen,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Normal,
+            maxLines = 1, // Текст в одну строку
+            overflow = TextOverflow.Ellipsis // Если текст не помещается, добавим многоточие
+        )
     }
 }
 // Компонент кнопки с иконкой
 @Composable
-fun GoalButton(text: String, iconRes: Int, onClick: () -> Unit) {
+fun GoalButtonGeneration(text: String, iconRes: Int, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
         shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)),
         modifier = Modifier
-            .width(184.dp)
+            .width(170.dp) // Сделаем кнопки одинаковыми по ширине
             .height(58.dp)
             .border(
-                width = 1.dp, // Ширина обводки
-                color = Maroon, // Цвет обводки
-                shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp)) // Форма обводки
+                width = 1.dp,
+                color = Maroon,
+                shape = MaterialTheme.shapes.small.copy(all = CornerSize(12.dp))
             )
     ) {
         Image(painter = painterResource(id = iconRes),
             contentDescription = null,
             modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(10.dp))
-        Text(text, color = DarkGreen, fontSize = 15.sp, fontWeight = FontWeight.Normal)
+        Text(
+            text = text,
+            color = DarkGreen,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Normal,
+            maxLines = 1, // Текст в одну строку
+            overflow = TextOverflow.Ellipsis // Если текст не помещается, добавим многоточие
+        )
     }
 }
 //элементы списка (цели на день)

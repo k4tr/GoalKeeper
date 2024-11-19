@@ -1,48 +1,64 @@
 package com.example.goalkeeper.viewmodel
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.goalkeeper.data.dao.ActiveDayDao
 import com.example.goalkeeper.repository.GoalRepository
-import com.example.goalkeeper.data.model.Difficulty
-import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.data.dao.GoalDao
 import com.example.goalkeeper.data.dao.TimeDao
+import com.example.goalkeeper.data.dao.entity.ActiveDay
+import com.example.goalkeeper.data.model.Difficulty
+import com.example.goalkeeper.data.model.Goal
 import com.example.goalkeeper.repository.TimeRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 data class GoalState(
     val goals: List<Goal?> = emptyList()
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 class GoalViewModel(
     private val repository: GoalRepository,
     private val goalDao: GoalDao,
     private val timeRepository: TimeRepository,
     private val timeDao: TimeDao,
-
-
+    private val activeDayDao: ActiveDayDao
 ) : ViewModel() {
 
     val _easyGoalsTime = MutableStateFlow(0f)
     val _mediumGoalsTime = MutableStateFlow(0f)
     val _hardGoalsTime = MutableStateFlow(0f)
+
     //Состояние для генерации списка целей
     private val _generatedGoals = MutableStateFlow<List<Goal>>(emptyList())
     val generatedGoals: StateFlow<List<Goal>> = _generatedGoals.asStateFlow()
+
     //Состояние для вывода списка целей
     private val _allGoals = MutableStateFlow<List<Goal>>(emptyList())
     val allGoals: StateFlow<List<Goal>> = _allGoals.asStateFlow()
+
     // Состояние для хранения списка целей
     private val _state = MutableStateFlow(GoalState())
     val state: StateFlow<GoalState> = _state
+
     //Состояние для свободного времени пользователя
     private val _timeForGoals = MutableStateFlow(0) // Время, введённое пользователем
     val timeForGoals: StateFlow<Int> = _timeForGoals.asStateFlow()
+
     // Состояние для Toast
     private val _showToast: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showToast: StateFlow<Boolean> = _showToast
@@ -51,9 +67,11 @@ class GoalViewModel(
 
     private val _easyGoalsCount = MutableLiveData<Int>()
     val easyGoalsCount: LiveData<Int> get() = _easyGoalsCount
-    private val _activeDays = MutableStateFlow<Set<Long>>(emptySet())
-    val activeDays: StateFlow<Set<Long>> = _activeDays
 
+    private val _activeDays = MutableStateFlow<List<Long>>(emptyList()) // список с датами активности в миллисекундах
+    val activeDays: StateFlow<List<Long>> = activeDayDao.getAllActiveDays()
+        .map { days -> days.map { it.date } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     init {
         loadTimeSettings()
@@ -73,41 +91,62 @@ class GoalViewModel(
         }
     }
 
-    fun setTimeForGoals(hours: Int) {
-        _timeForGoals.value = hours
-    }
-
-    fun updateGoal(goal: Goal) {
-        viewModelScope.launch {
-            goalDao.updateGoal(goal)
-            _generatedGoals.value = _generatedGoals.value.map {
-                if (it.id == goal.id) goal else it // Обновляем список с новым состоянием
-            }
-        }
-    }
-
     // Обработчик изменения состояния чекбокса
-    fun onGoalCheckedChange(goal: Goal, isChecked: Boolean) {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun onGoalCheckedChange(goal: Goal, isCompleted: Boolean) {
         viewModelScope.launch {
-            val updatedGoal = goal.copy(isCompleted = isChecked)
-            repository.updateGoal(updatedGoal)
-            _generatedGoals.value = _generatedGoals.value.map { if (it.id == goal.id) updatedGoal else it }
+            // Обновляем цель в базе данных
+            goalDao.updateGoal(goal.copy(isCompleted = isCompleted))
 
-            // Обновляем активные дни, если цель отмечена как выполненная
-            if (isChecked) {
-                goal.generationDate?.let { day ->
-                    _activeDays.value = _activeDays.value + day
+            val allGoals = goalDao.getAllGoals()
+            // Получаем текущую дату
+            val startOfDayMillis = LocalDate.now()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+
+            val endOfDayMillis = LocalDate.now()
+                .plusDays(1)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+            // Загружаем все цели для текущего дня
+            // Перезагружаем все цели на текущий день из базы данных
+            val todayGoals = allGoals.filter {
+                val generationDateMillis = it.generationDate?.times(24)?.times(60)?.times(60)
+                    ?.times(1000L)
+                generationDateMillis == startOfDayMillis
+            }
+            Log.d("GoalCheck", "Today goals after manual filtering: $todayGoals")
+            // Лог для проверки данных
+            // Проверяем, есть ли хотя бы одна выполненная цель
+            val anyGoalCompleted = todayGoals.any { it.isCompleted }
+            Log.d("GoalCheck", "Any goal completed: $anyGoalCompleted")
+
+            // Если цель выполнена, добавляем текущий день в таблицу активных дней
+            if (anyGoalCompleted) {
+                activeDayDao.insertActiveDay(ActiveDay(date = startOfDayMillis))
+            }
+            else{
+                if (activeDays.value.contains(startOfDayMillis)) {
+                    activeDayDao.deleteActiveDay(startOfDayMillis)
                 }
+            }
+
+            // Перезагружаем список целей из базы данных, чтобы обновить UI
+            _generatedGoals.value = _generatedGoals.value.map {
+                if (it.id == goal.id) it.copy(isCompleted = isCompleted) else it
             }
         }
     }
 
     // Загрузка сгенерированных целей на сегодня
+    @RequiresApi(Build.VERSION_CODES.O)
     fun loadGeneratedGoals() {
         viewModelScope.launch {
-            val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
-            val generatedGoals = goalDao.getGeneratedGoalsForDate(today)
-            _generatedGoals.value = generatedGoals // Отображаем только цели, сгенерированные на текущий день
+            val todayDays = System.currentTimeMillis() / (1000 * 60 * 60 * 24) // Текущая дата в днях
+            val generatedGoals = goalDao.getGeneratedGoalsForDate(todayDays, todayDays + 1)
+            _generatedGoals.value = generatedGoals
         }
     }
 
@@ -137,7 +176,6 @@ class GoalViewModel(
 
     // Генерация целей
     fun generateGoals() {
-
         viewModelScope.launch {
             val today = System.currentTimeMillis() / (1000 * 60 * 60 * 24)  // Текущая дата в днях
 
@@ -166,7 +204,6 @@ class GoalViewModel(
                 // Устанавливаем сообщение для Toast
                 _toastMessage.value = "Недостаточно введенных целей для корректной генерации"
                 _showToast.value = true // Показываем Toast
-//               return@launch
             }
 
             val mediumGoals = goalDao.getGoalsByDifficulty(Difficulty.NORMAL)
