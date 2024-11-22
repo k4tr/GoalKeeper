@@ -37,7 +37,10 @@ fun ActivityCalendar(
     val firstDayOfMonth = selectedMonth.atDay(1)
     val daysOffset = firstDayOfMonth.dayOfWeek.value % 7
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(
+        modifier = modifier
+            .height(300.dp)
+            .padding(16.dp)) {
         // Шапка с названием месяца и навигацией
         Row(
             modifier = Modifier.fillMaxWidth(),

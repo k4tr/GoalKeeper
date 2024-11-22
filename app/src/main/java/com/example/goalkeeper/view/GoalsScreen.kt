@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -108,8 +109,10 @@ fun GoalsScreen(
                 .background(Color(0xFFF2F2F6)), // Устанавливаем фон экрана
             contentAlignment = Alignment.TopStart
         ) {
+            // Прокручиваем весь экран
             Column(
                 modifier = Modifier
+                    .verticalScroll(rememberScrollState()) // Прокрутка всего экрана
                     .padding(22.dp)
                     .padding(paddingValues)
             ) {
@@ -119,7 +122,7 @@ fun GoalsScreen(
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
-                Row(){
+                Row {
                     // Название приложения
                     Text(
                         text = "GoalKeeper",
@@ -131,32 +134,31 @@ fun GoalsScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 // Кнопки "Параметры" и "Генерация"
-                Row (modifier = Modifier.fillMaxWidth(),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
-                ){
+                ) {
                     GoalButtonGeneration(
                         text = "Генерация",
                         iconRes = R.drawable.icon_add,
                         onClick = {
-
                             goalViewModel.generateGoals()
                         }
-
                     )
-
                     GoalButtonParameters(
                         text = "Параметры",
                         iconRes = R.drawable.component_1,
                         onClick = { navController.navigate("settingsScreen") }
-
                     )
                 }
+
                 // Проверяем и отображаем кастомный Toast
                 if (showToast) {
                     CustomToast(context = context, message = toastMessage) {
                         goalViewModel.resetToastFlag() // Сбрасываем флаг после показа тоста
                     }
                 }
+
                 Text(
                     text = "Цели на сегодня:",
                     color = DarkGreen,
@@ -164,26 +166,28 @@ fun GoalsScreen(
                     fontWeight = FontWeight.Normal,
                     modifier = Modifier.padding(top = 16.dp)
                 )
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 16.dp) // Отступы между элементами
                         .background(Color.White, shape = RoundedCornerShape(12.dp)) // Белая подложка с закругленными углами
                         .border(
-                            width = 1.dp, // Ширина обводки
-                            color = Maroon, // Цвет обводки
-                            shape = RoundedCornerShape(12.dp) // Форма обводки
+                            width = 1.dp,
+                            color = Maroon,
+                            shape = RoundedCornerShape(12.dp)
                         )
-                        .padding(16.dp) // Внутренние отступы внутри элемента
-                ){
+                        .padding(16.dp)
+                ) {
                     if (generatedGoals.isEmpty()) {
                         Text(text = "Пока что целей нет! Скорее добавьте их :D", color = Color.Gray)
                     } else {
-                        LazyColumn {
-                            items(generatedGoals) { goal ->
+                        Column { // Используем обычный Column, так как LazyColumn уже не нужен
+                            generatedGoals.forEach { goal ->
+                                val isChecked = goal.isCompleted
                                 GoalItemWithCheckbox(
                                     goal = goal,
-                                    isChecked = goal.isCompleted,
+                                    isChecked = isChecked,
                                     onCheckedChange = { checked ->
                                         goalViewModel.onGoalCheckedChange(goal, checked)
                                     }
@@ -192,6 +196,13 @@ fun GoalsScreen(
                         }
                     }
                 }
+                Text(
+                    text = "Активность за месяц:",
+                    color = DarkGreen,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
                 ActivityCalendar(activeDays = activeDaysList)
             }
         }
